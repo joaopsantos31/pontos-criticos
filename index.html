@@ -1,0 +1,3170 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Estudo dos Pontos Críticos</title>
+
+  <!-- Fontes Acadêmicas (Plus Jakarta Sans, Inter e JetBrains Mono) -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&family=Plus+Jakarta+Sans:wght@600;700;800&display=swap" rel="stylesheet" />
+
+  <!-- Tailwind CSS via CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['Inter', 'system-ui', '-apple-system', 'sans-serif'],
+            display: ['Plus Jakarta Sans', 'Inter', 'system-ui', 'sans-serif'],
+            mono: ['JetBrains Mono', 'ui-monospace', 'SFMono-Regular', 'monospace'],
+          },
+          colors: {
+            institucional: {
+              950: '#172554',
+              900: '#1E3A8A',
+              800: '#1E40AF',
+              700: '#1D4ED8',
+              600: '#2563EB',
+            },
+            celeste: {
+              600: '#0284C7',
+              500: '#0EA5E9',
+              400: '#38BDF8',
+              100: '#E0F2FE',
+              50: '#F0F9FF',
+            }
+          }
+        }
+      }
+    };
+  </script>
+
+  <!-- KaTeX para renderização matemática -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css" />
+  <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js"></script>
+  <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js"></script>
+
+  <!-- Plotly.js para gráficos interativos responsivos -->
+  <script src="https://cdn.plot.ly/plotly-2.35.2.min.js"></script>
+
+  <!-- Math.js para parsing, derivação simbólica e avaliação numérica -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/mathjs/13.1.1/math.min.js"></script>
+
+  <style>
+    :root {
+      --ease-smooth: cubic-bezier(0.22, 1, 0.36, 1);
+      --blue-deep: #1E3A8A;
+      --blue-royal: #2563EB;
+      --sky-accent: #0284C7;
+      --sky-bright: #38BDF8;
+    }
+
+    html {
+      scroll-behavior: smooth;
+    }
+
+    body {
+      font-family: 'Inter', system-ui, -apple-system, sans-serif;
+      background-color: #F8FAFC;
+      color: #0F172A;
+    }
+
+    h1, h2, h3, h4 {
+      font-family: 'Plus Jakarta Sans', 'Inter', system-ui, sans-serif;
+    }
+
+    /* Tipografia matemática mais legível e destacada */
+    .katex {
+      font-size: 1.05em;
+    }
+    .katex-display {
+      margin: 0.75rem 0 !important;
+      overflow-x: auto;
+      overflow-y: hidden;
+      padding: 0.35rem 0.25rem;
+    }
+    .callout-math .katex {
+      font-size: 1.16em;
+    }
+
+    .plotly-container {
+      width: 100%;
+      min-height: 320px;
+    }
+
+    /* Barra de progresso de leitura no topo da tela */
+    #reading-progress-track {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 3px;
+      z-index: 60;
+      background: transparent;
+      pointer-events: none;
+    }
+    #reading-progress-bar {
+      height: 100%;
+      width: 0%;
+      background: linear-gradient(90deg, #38BDF8 0%, #60A5FA 100%);
+      transition: width 120ms linear, opacity 250ms var(--ease-smooth);
+      box-shadow: 0 0 8px rgba(56, 189, 248, 0.65);
+    }
+
+    /* Abas do menu com indicador animado */
+    .nav-tab-btn {
+      position: relative;
+      transition: color 220ms var(--ease-smooth), background-color 220ms var(--ease-smooth), transform 180ms var(--ease-smooth);
+    }
+    .nav-tab-btn::after {
+      content: '';
+      position: absolute;
+      left: 14px;
+      right: 14px;
+      bottom: 4px;
+      height: 2.5px;
+      border-radius: 9999px;
+      background-color: #38BDF8;
+      transform: scaleX(0);
+      transform-origin: center;
+      transition: transform 260ms var(--ease-smooth);
+    }
+    .nav-tab-btn:hover::after {
+      transform: scaleX(0.65);
+    }
+    .nav-tab-btn.is-active::after {
+      transform: scaleX(1);
+    }
+    .nav-tab-btn:active {
+      transform: scale(0.98);
+    }
+
+    /* Micro-interações elegantes de elevação no hover */
+    .hover-card {
+      transition: transform 260ms var(--ease-smooth), box-shadow 260ms var(--ease-smooth), border-color 240ms var(--ease-smooth), background-color 220ms var(--ease-smooth);
+    }
+    .hover-card:hover {
+      transform: translateY(-2.5px);
+      box-shadow: 0 12px 26px -10px rgba(30, 58, 138, 0.14), 0 4px 10px -4px rgba(37, 99, 235, 0.08);
+      border-color: #93C5FD;
+    }
+
+    .hover-lift {
+      transition: transform 220ms var(--ease-smooth), box-shadow 220ms var(--ease-smooth), border-color 220ms var(--ease-smooth), background-color 200ms var(--ease-smooth), color 200ms var(--ease-smooth);
+    }
+    .hover-lift:hover:not(:disabled) {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 18px -6px rgba(30, 58, 138, 0.18);
+    }
+    .hover-lift:active:not(:disabled) {
+      transform: translateY(0);
+    }
+
+    /* Itens interativos com destaque de borda lateral azul-viva */
+    .interactive-item {
+      border-left: 3.5px solid transparent;
+      transition: transform 220ms var(--ease-smooth), background-color 200ms var(--ease-smooth), border-color 220ms var(--ease-smooth), box-shadow 220ms var(--ease-smooth);
+    }
+    .interactive-item:hover {
+      transform: translateX(2px);
+      border-left-color: #2563EB;
+      background-color: #EFF6FF;
+      box-shadow: 0 6px 16px -8px rgba(30, 58, 138, 0.16);
+    }
+    .interactive-item.is-selected {
+      border-left-color: #1E3A8A;
+      background-color: #EFF6FF;
+      border-color: #93C5FD;
+      border-left-width: 4px;
+      box-shadow: 0 8px 20px -10px rgba(30, 58, 138, 0.22);
+    }
+
+    /* Linhas clicáveis da tabela do Playground */
+    .pg-table-row {
+      border-left: 3.5px solid transparent;
+      transition: background-color 180ms var(--ease-smooth), border-color 180ms var(--ease-smooth);
+      cursor: pointer;
+    }
+    .pg-table-row:hover {
+      background-color: #F0F9FF;
+      border-left-color: #2563EB;
+    }
+    .pg-table-row.is-focused {
+      background-color: #EFF6FF;
+      border-left-color: #1E3A8A;
+    }
+
+    /* Animação de entrada suave para abas e passos */
+    @keyframes fadeSlideUp {
+      from {
+        opacity: 0;
+        transform: translateY(10px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+    .animate-enter {
+      animation: fadeSlideUp 320ms var(--ease-smooth) both;
+    }
+
+    /* Offset de âncoras para compensar header fixo */
+    .scroll-section {
+      scroll-margin-top: 8.5rem;
+    }
+
+    /* Proteção rigorosa para tooltips do Plotly.js (garante alto contraste e texto sempre visível) */
+    .js-plotly-plot .hoverlayer,
+    .js-plotly-plot .hoverlayer .hovertext {
+      pointer-events: none !important;
+      transition: none !important;
+      animation: none !important;
+    }
+    .js-plotly-plot .hoverlayer .hovertext text,
+    .js-plotly-plot .hoverlayer .hovertext tspan {
+      fill: #FFFFFF !important;
+      color: #FFFFFF !important;
+      opacity: 1 !important;
+      visibility: visible !important;
+      font-family: 'Inter', system-ui, -apple-system, sans-serif !important;
+    }
+
+    /* Respeito rigoroso a preferências de redução de movimento */
+    @media (prefers-reduced-motion: reduce) {
+      html {
+        scroll-behavior: auto;
+      }
+      *, *::before, *::after {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+      }
+      .hover-card:hover,
+      .hover-lift:hover,
+      .interactive-item:hover {
+        transform: none !important;
+      }
+    }
+  </style>
+</head>
+<body class="bg-[#F8FAFC] text-slate-900 antialiased min-h-screen flex flex-col">
+
+  <!-- Barra sutil de progresso de leitura (ativa na aba Visão Geral) -->
+  <div id="reading-progress-track" aria-hidden="true">
+    <div id="reading-progress-bar"></div>
+  </div>
+
+  <!-- Cabeçalho Institucional Fixo -->
+  <header class="bg-gradient-to-r from-[#172554] via-[#1E3A8A] to-[#1E40AF] text-white shadow-md border-b border-sky-400/20 sticky top-0 z-50">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div class="flex items-center justify-between h-16">
+        <!-- Título Principal Limpo (somente o título em negrito) -->
+        <div class="flex items-center space-x-3">
+          <div class="w-9 h-9 rounded-xl bg-white/10 backdrop-blur-xs flex items-center justify-center border border-sky-300/30 shrink-0 shadow-inner">
+            <svg class="w-5 h-5 text-sky-300" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24" aria-hidden="true">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M3 17l4.5-8 4 5.5 4.5-9.5L21 15" />
+            </svg>
+          </div>
+          <h1 class="text-base sm:text-lg font-extrabold tracking-tight text-white">
+            Estudo dos Pontos Críticos
+          </h1>
+        </div>
+
+        <!-- Navegação Principal Desktop (sem numeração, apenas títulos em negrito) -->
+        <nav class="hidden md:flex items-center space-x-1.5" aria-label="Navegação principal">
+          <button type="button" data-tab="teoria" class="nav-tab-btn is-active px-4 py-2.5 rounded-lg text-sm font-bold bg-white/15 text-white">
+            Visão Geral
+          </button>
+          <button type="button" data-tab="exemplos" class="nav-tab-btn px-4 py-2.5 rounded-lg text-sm font-bold text-sky-100/90 hover:text-white hover:bg-white/10">
+            Exemplos Resolvidos
+          </button>
+          <button type="button" data-tab="playground" class="nav-tab-btn px-4 py-2.5 rounded-lg text-sm font-bold text-sky-100/90 hover:text-white hover:bg-white/10">
+            Playground Interativo
+          </button>
+        </nav>
+
+        <!-- Botão Menu Mobile -->
+        <button id="mobile-menu-btn" type="button" class="md:hidden p-2.5 rounded-lg text-sky-100 hover:bg-white/10 focus:outline-none focus:ring-2 focus:ring-sky-300 transition-colors" aria-label="Abrir menu de navegação" aria-expanded="false">
+          <svg id="mobile-menu-icon-open" class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M4 12h16M4 18h16" />
+          </svg>
+          <svg id="mobile-menu-icon-close" class="w-6 h-6 hidden" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+          </svg>
+        </button>
+      </div>
+    </div>
+
+    <!-- Menu Recolhível Mobile (sem numeração, apenas títulos em negrito) -->
+    <div id="mobile-menu" class="md:hidden hidden bg-[#172554] border-t border-white/10 px-4 pt-2 pb-3 space-y-1.5">
+      <button type="button" data-tab="teoria" class="nav-tab-btn-mobile block w-full text-left px-3.5 py-2.5 rounded-lg text-sm font-bold bg-[#2563EB] text-white transition-colors">
+        Visão Geral
+      </button>
+      <button type="button" data-tab="exemplos" class="nav-tab-btn-mobile block w-full text-left px-3.5 py-2.5 rounded-lg text-sm font-bold text-sky-100 hover:bg-white/10 transition-colors">
+        Exemplos Resolvidos
+      </button>
+      <button type="button" data-tab="playground" class="nav-tab-btn-mobile block w-full text-left px-3.5 py-2.5 rounded-lg text-sm font-bold text-sky-100 hover:bg-white/10 transition-colors">
+        Playground Interativo
+      </button>
+    </div>
+  </header>
+
+  <!-- Conteúdo Principal -->
+  <main class="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-9 pb-14">
+
+    <!-- ===================================================================== -->
+    <!-- ABA 1: VISÃO GERAL (TEORIA)                                           -->
+    <!-- ===================================================================== -->
+    <section id="tab-teoria" class="tab-panel space-y-8 animate-enter">
+
+      <!-- Cabeçalho da Aba + Navegação Rápida Interna (pills sem numeração, títulos em negrito) -->
+      <div class="bg-white border border-slate-200 rounded-2xl p-5 sm:p-7 shadow-xs space-y-5">
+        <div class="space-y-2.5">
+          <h2 class="text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight">
+            Visão Geral
+          </h2>
+          <p class="text-sm sm:text-base text-slate-700 max-w-4xl leading-relaxed">
+            Junto com os princípios e regras de derivação estudados no curso, trabalhamos o conceito de <strong>pontos críticos</strong> de uma função de maneira gráfica (para visualização) e por meio das derivadas (para identificação analítica). Conhecer esses conceitos fomenta a percepção analítica para aplicações em situações reais.
+          </p>
+        </div>
+
+        <!-- Barra de Navegação Rápida Interna -->
+        <div class="pt-3 border-t border-slate-100">
+          <div class="flex flex-wrap gap-2" role="navigation" aria-label="Atalhos das seções teóricas">
+            <a href="#sec-conceito" class="quick-pill hover-lift inline-flex items-center px-3.5 py-2 rounded-lg text-xs sm:text-sm font-bold bg-[#EFF6FF] text-[#1E3A8A] border border-blue-200/80 hover:bg-[#2563EB] hover:text-white hover:border-[#2563EB]">
+              Conceito
+            </a>
+            <a href="#sec-locais-globais" class="quick-pill hover-lift inline-flex items-center px-3.5 py-2 rounded-lg text-xs sm:text-sm font-bold bg-white text-slate-700 border border-slate-200 hover:bg-[#EFF6FF] hover:text-[#1E3A8A] hover:border-blue-300">
+              Locais e Globais
+            </a>
+            <a href="#sec-tangente" class="quick-pill hover-lift inline-flex items-center px-3.5 py-2 rounded-lg text-xs sm:text-sm font-bold bg-white text-slate-700 border border-slate-200 hover:bg-[#EFF6FF] hover:text-[#1E3A8A] hover:border-blue-300">
+              Retas Tangentes
+            </a>
+            <a href="#sec-segunda-derivada" class="quick-pill hover-lift inline-flex items-center px-3.5 py-2 rounded-lg text-xs sm:text-sm font-bold bg-white text-slate-700 border border-slate-200 hover:bg-[#EFF6FF] hover:text-[#1E3A8A] hover:border-blue-300">
+              Teste da 2ª Derivada
+            </a>
+            <a href="#sec-concavidade" class="quick-pill hover-lift inline-flex items-center px-3.5 py-2 rounded-lg text-xs sm:text-sm font-bold bg-white text-slate-700 border border-slate-200 hover:bg-[#EFF6FF] hover:text-[#1E3A8A] hover:border-blue-300">
+              Inflexão
+            </a>
+            <a href="#sec-sintese" class="quick-pill hover-lift inline-flex items-center px-3.5 py-2 rounded-lg text-xs sm:text-sm font-bold bg-white text-slate-700 border border-slate-200 hover:bg-[#EFF6FF] hover:text-[#1E3A8A] hover:border-blue-300">
+              Síntese
+            </a>
+          </div>
+        </div>
+      </div>
+
+      <!-- SEÇÃO: Conceito de Pontos Críticos e Região A -->
+      <article id="sec-conceito" class="scroll-section bg-white border border-slate-200 rounded-2xl p-5 sm:p-7 shadow-xs hover-card">
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-7 items-center">
+          <div class="lg:col-span-5 space-y-4">
+            <h3 class="text-xl font-extrabold text-slate-900 tracking-tight">
+              Conceito de Pontos Críticos e Região $A$
+            </h3>
+            <p class="text-sm sm:text-base text-slate-700 leading-relaxed">
+              Definimos <strong>pontos críticos</strong> como pontos no domínio de uma função que indicam um valor <strong>MÁXIMO</strong>, um valor <strong>MÍNIMO</strong> ou um <strong>ponto de INFLEXÃO</strong>.
+            </p>
+            <p class="text-sm sm:text-base text-slate-700 leading-relaxed">
+              O conceito é trabalhado de maneira gráfica (que nos ajuda a visualizar a situação) e por meio das derivadas (que nos indicam exatamente os pontos críticos), desenvolvendo a percepção analítica para aplicações em situações reais.
+            </p>
+
+            <!-- Caixa de Destaque: Definição-Chave -->
+            <div class="callout-math bg-[#EFF6FF] border-l-[5px] border-[#1E3A8A] border-y border-r border-blue-200 rounded-r-xl p-4 sm:p-5 space-y-3 hover-lift">
+              <div class="flex items-center gap-2 text-[#1E3A8A]">
+                <svg class="w-5 h-5 shrink-0" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24" aria-hidden="true">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6l4 2m6-2a10 10 0 11-20 0 10 10 0 0120 0z" />
+                </svg>
+                <span class="text-xs font-extrabold uppercase tracking-wider">Definição-Chave — Região $A$</span>
+              </div>
+              <div class="text-sm sm:text-base text-slate-800">
+                Para uma curva $f(x)$ analisada em uma região $A$:
+              </div>
+              <div class="bg-white/90 border border-blue-100 rounded-lg p-3.5 space-y-2.5">
+                <div class="text-sm text-slate-900">
+                  <span class="inline-block px-2 py-0.5 rounded text-xs font-bold bg-[#1E3A8A] text-white mr-1.5">Ponto de Máximo</span>
+                  $p$ é ponto de máximo se:
+                  $$f(p) \ge f(x), \quad \text{com } x \in A$$
+                </div>
+                <div class="border-t border-slate-100 pt-2.5 text-sm text-slate-900">
+                  <span class="inline-block px-2 py-0.5 rounded text-xs font-bold bg-[#0284C7] text-white mr-1.5">Ponto de Mínimo</span>
+                  $p$ é ponto de mínimo se:
+                  $$f(p) \le f(x), \quad \text{com } x \in A$$
+                </div>
+              </div>
+            </div>
+
+            <p class="text-xs sm:text-sm text-slate-600 leading-relaxed">
+              No gráfico ao lado, <strong>$p_1$</strong> é ponto de máximo pois é o maior valor que a função atinge em toda a região $A$, e <strong>$p_2$</strong> é ponto de mínimo pois é o menor valor atingido em toda a região $A$. Observe que a região $A$ não cobre toda a extensão da curva $f(x)$.
+            </p>
+          </div>
+
+          <div class="lg:col-span-7">
+            <div class="bg-[#F8FAFC] border border-slate-200 rounded-xl p-3 sm:p-4">
+              <div class="flex items-center justify-between px-2 pb-2.5 border-b border-slate-200/80">
+                <span class="text-xs font-bold text-slate-700 uppercase tracking-wide">Curva $f(x)$ na Região $A$</span>
+                <span class="text-xs font-medium text-[#0284C7] bg-sky-50 border border-sky-200 px-2 py-0.5 rounded-md">Gráfico Interativo</span>
+              </div>
+              <div id="chart-teoria-regiao-a" class="plotly-container h-72 sm:h-80 mt-2"></div>
+            </div>
+          </div>
+        </div>
+      </article>
+
+      <!-- SEÇÃO: Pontos Críticos Locais e Globais -->
+      <article id="sec-locais-globais" class="scroll-section bg-white border border-slate-200 rounded-2xl p-5 sm:p-7 shadow-xs hover-card space-y-6">
+        <div class="space-y-2.5 max-w-4xl">
+          <h3 class="text-xl font-extrabold text-slate-900 tracking-tight">
+            Pontos Críticos Locais e Globais
+          </h3>
+          <p class="text-sm sm:text-base text-slate-700 leading-relaxed">
+            Um ponto crítico pode ser máximo ou mínimo em uma determinada região (<strong>local</strong>) ou em todo o domínio analisado da função (<strong>global</strong>). Pontos de <strong>máximo local</strong> são o maior valor de uma região da qual fazem parte, mas não de todo o domínio. Analogamente, pontos de <strong>mínimo local</strong> são o menor valor de uma região, mas não de todo o domínio. Já os pontos de <strong>máximo global</strong> e <strong>mínimo global</strong> representam os extremos de todo o domínio analisado.
+          </p>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+          <div class="lg:col-span-8">
+            <div class="bg-[#F8FAFC] border border-slate-200 rounded-xl p-3 sm:p-4">
+              <div class="flex flex-wrap items-center justify-between gap-2 px-2 pb-2.5 border-b border-slate-200/80">
+                <span class="text-xs font-bold text-slate-700 uppercase tracking-wide">Classificação dos Pontos $p_1$ a $p_6$</span>
+                <button id="btn-reset-p-highlight" type="button" class="hover-lift text-xs font-bold text-[#1E3A8A] bg-white border border-blue-200 hover:bg-[#EFF6FF] px-3 py-1 rounded-lg">
+                  Mostrar todos os pontos
+                </button>
+              </div>
+              <div id="chart-teoria-local-global" class="plotly-container h-72 sm:h-80 mt-2"></div>
+            </div>
+          </div>
+
+          <!-- Cartões clicáveis e sensíveis ao hover para p1..p6 -->
+          <div class="lg:col-span-4 space-y-2.5">
+            <p class="text-xs font-bold uppercase tracking-wider text-slate-600">
+              Passe o mouse ou clique para destacar no gráfico:
+            </p>
+            <div id="local-global-cards" class="grid grid-cols-2 lg:grid-cols-1 gap-2">
+              <!-- Gerado dinamicamente via JS -->
+            </div>
+          </div>
+        </div>
+      </article>
+
+      <!-- SEÇÃO: Reta Tangente e Derivada Igual a Zero -->
+      <article id="sec-tangente" class="scroll-section bg-white border border-slate-200 rounded-2xl p-5 sm:p-7 shadow-xs hover-card">
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-7 items-center">
+          <div class="lg:col-span-5 space-y-4">
+            <h3 class="text-xl font-extrabold text-slate-900 tracking-tight">
+              Reta Tangente e Derivada Igual a Zero
+            </h3>
+            <p class="text-sm sm:text-base text-slate-700 leading-relaxed">
+              Quando uma função atinge um valor máximo ou mínimo, ela chega ao seu ápice: para de crescer ou decrescer e, portanto, <strong>para de variar</strong>. Assim, a <strong>reta tangente</strong> nesse ponto não tem inclinação — seu coeficiente angular é igual a zero.
+            </p>
+            <p class="text-sm sm:text-base text-slate-700 leading-relaxed">
+              Como a derivada representa o coeficiente angular da reta tangente em um ponto $p$, concluímos que, se $p$ é ponto crítico, a derivada em $p$ é igual a <strong>ZERO</strong>.
+            </p>
+
+            <!-- Caixa de Destaque: Condição Necessária -->
+            <div class="callout-math bg-[#F0F9FF] border-l-[5px] border-[#2563EB] border-y border-r border-sky-200 rounded-r-xl p-4 sm:p-5 space-y-2.5 hover-lift">
+              <div class="flex items-center gap-2 text-[#1E3A8A]">
+                <svg class="w-5 h-5 shrink-0 text-[#2563EB]" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24" aria-hidden="true">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+                </svg>
+                <span class="text-xs font-extrabold uppercase tracking-wider">Condição Necessária</span>
+              </div>
+              <p class="text-sm text-slate-800 leading-relaxed">
+                Se $f(x)$ é derivável em $p \in D_f$, uma condição necessária para $p$ ser ponto crítico (de máximo ou mínimo local) é que:
+              </p>
+              <div class="bg-white border border-sky-200/80 rounded-lg py-2 px-3 text-center text-[#1E3A8A] font-bold">
+                $$f'(p) = 0$$
+              </div>
+              <p class="text-xs sm:text-sm text-slate-700 leading-relaxed pt-1">
+                <strong>Atenção:</strong> essa condição apenas aponta quais são os pontos críticos, sem ainda dizer se são pontos de máximo ou de mínimo.
+              </p>
+            </div>
+
+            <div class="pt-1">
+              <button id="btn-toggle-tangents" type="button" class="hover-lift w-full sm:w-auto inline-flex items-center justify-center gap-2.5 px-5 py-3 rounded-xl text-sm font-bold bg-[#1E3A8A] hover:bg-[#2563EB] text-white shadow-sm">
+                <svg class="w-4 h-4 text-sky-300" fill="none" stroke="currentColor" stroke-width="2.4" viewBox="0 0 24 24" aria-hidden="true">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M4 12h16" />
+                </svg>
+                <span id="btn-toggle-tangents-label">Ocultar Retas Tangentes Horizontais</span>
+              </button>
+            </div>
+          </div>
+
+          <div class="lg:col-span-7">
+            <div class="bg-[#F8FAFC] border border-slate-200 rounded-xl p-3 sm:p-4">
+              <div class="flex flex-wrap items-center justify-between gap-2 px-2 pb-2.5 border-b border-slate-200/80">
+                <span class="text-xs font-bold text-slate-700 uppercase tracking-wide">Retas Tangentes nos Pontos Críticos (Coeficiente Angular = 0)</span>
+                <span id="tangent-status-badge" class="text-xs font-bold text-[#0284C7] bg-sky-50 border border-sky-200 px-2.5 py-0.5 rounded-md">Tangentes visíveis</span>
+              </div>
+              <div id="chart-teoria-tangentes" class="plotly-container h-72 sm:h-80 mt-2"></div>
+            </div>
+          </div>
+        </div>
+      </article>
+
+      <!-- SEÇÃO: Teste da Segunda Derivada -->
+      <article id="sec-segunda-derivada" class="scroll-section bg-white border border-slate-200 rounded-2xl p-5 sm:p-7 shadow-xs hover-card space-y-6">
+        <div class="space-y-2.5 max-w-4xl">
+          <h3 class="text-xl font-extrabold text-slate-900 tracking-tight">
+            Teste da Segunda Derivada
+          </h3>
+          <p class="text-sm sm:text-base text-slate-700 leading-relaxed">
+            Para classificar os pontos críticos ($f'(p) = 0$) em <strong>máximo local</strong> ou <strong>mínimo local</strong>, observamos o sinal da segunda derivada $f''(p)$ nos pontos analisados — isto é, verificamos se $f''(p)$ é positivo ou negativo.
+          </p>
+        </div>
+
+        <!-- Caixa de Destaque: Regra do Teste -->
+        <div class="callout-math bg-[#EFF6FF] border-l-[5px] border-[#1E3A8A] border-y border-r border-blue-200 rounded-r-xl p-5 space-y-4">
+          <div class="flex items-center gap-2 text-[#1E3A8A]">
+            <svg class="w-5 h-5 shrink-0" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24" aria-hidden="true">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" />
+            </svg>
+            <span class="text-xs font-extrabold uppercase tracking-wider">Regra do Teste da Segunda Derivada</span>
+          </div>
+
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div class="bg-white border border-sky-200 rounded-xl p-4 hover-card space-y-2">
+              <span class="inline-flex items-center px-2.5 py-0.5 rounded-md text-xs font-bold bg-[#E0F2FE] text-[#0284C7] border border-sky-300">
+                Sinal Positivo
+              </span>
+              <div class="text-base font-semibold text-slate-900">
+                Se $f'(p) = 0$ e $f''(p) > 0$
+              </div>
+              <p class="text-sm font-extrabold text-[#0284C7]">
+                $\rightarrow p$ é ponto de mínimo local
+              </p>
+            </div>
+
+            <div class="bg-white border border-blue-200 rounded-xl p-4 hover-card space-y-2">
+              <span class="inline-flex items-center px-2.5 py-0.5 rounded-md text-xs font-bold bg-[#DBEAFE] text-[#1E3A8A] border border-blue-300">
+                Sinal Negativo
+              </span>
+              <div class="text-base font-semibold text-slate-900">
+                Se $f'(p) = 0$ e $f''(p) < 0$
+              </div>
+              <p class="text-sm font-extrabold text-[#1E3A8A]">
+                $\rightarrow p$ é ponto de máximo local
+              </p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Roteiro de Passos em cartões visuais destacados com hover -->
+        <div class="space-y-3">
+          <h4 class="text-sm font-extrabold uppercase tracking-wider text-[#1E3A8A]">
+            Roteiro Prático de Análise
+          </h4>
+          <ol class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3.5">
+            <li class="interactive-item bg-[#F8FAFC] border border-slate-200 rounded-xl p-4">
+              <span class="inline-block text-xs font-extrabold uppercase tracking-wider text-[#2563EB] bg-blue-50 px-2 py-0.5 rounded">1º passo</span>
+              <p class="text-sm font-medium text-slate-800 mt-2 leading-snug">Calcule $f'(x)$.</p>
+            </li>
+            <li class="interactive-item bg-[#F8FAFC] border border-slate-200 rounded-xl p-4">
+              <span class="inline-block text-xs font-extrabold uppercase tracking-wider text-[#2563EB] bg-blue-50 px-2 py-0.5 rounded">2º passo</span>
+              <p class="text-sm font-medium text-slate-800 mt-2 leading-snug">Calcule os valores de $x$ para $f'(x) = 0$.</p>
+            </li>
+            <li class="interactive-item bg-[#F8FAFC] border border-slate-200 rounded-xl p-4">
+              <span class="inline-block text-xs font-extrabold uppercase tracking-wider text-[#2563EB] bg-blue-50 px-2 py-0.5 rounded">3º passo</span>
+              <p class="text-sm font-medium text-slate-800 mt-2 leading-snug">Os valores de $x$ são os pontos críticos $(p_1, p_2, p_3 \dots)$.</p>
+            </li>
+            <li class="interactive-item bg-[#F8FAFC] border border-slate-200 rounded-xl p-4">
+              <span class="inline-block text-xs font-extrabold uppercase tracking-wider text-[#2563EB] bg-blue-50 px-2 py-0.5 rounded">4º passo</span>
+              <p class="text-sm font-medium text-slate-800 mt-2 leading-snug">
+                Calcule $f''(p)$.
+                <span class="block mt-1.5 text-xs font-semibold text-[#0284C7] bg-sky-50 border border-sky-200/80 rounded px-2 py-1">
+                  4.1º passo: Estude o sinal de $f''(x)$.
+                </span>
+              </p>
+            </li>
+            <li class="interactive-item bg-[#F8FAFC] border border-slate-200 rounded-xl p-4">
+              <span class="inline-block text-xs font-extrabold uppercase tracking-wider text-[#2563EB] bg-blue-50 px-2 py-0.5 rounded">5º passo</span>
+              <p class="text-sm font-medium text-slate-800 mt-2 leading-snug">Classifique: se $f''(p) > 0$, é mínimo local; se $f''(p) < 0$, é máximo local.</p>
+            </li>
+          </ol>
+        </div>
+      </article>
+
+      <!-- SEÇÃO: Concavidade e Ponto de Inflexão -->
+      <article id="sec-concavidade" class="scroll-section bg-white border border-slate-200 rounded-2xl p-5 sm:p-7 shadow-xs hover-card">
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-7 items-center">
+          <div class="lg:col-span-5 space-y-4">
+            <h3 class="text-xl font-extrabold text-slate-900 tracking-tight">
+              Concavidade e Ponto de Inflexão
+            </h3>
+            <p class="text-sm sm:text-base text-slate-700 leading-relaxed">
+              O estudo de pontos críticos também conta com o <strong>ponto de inflexão</strong>, ponto em que uma função <strong>muda de concavidade</strong>. Ele é determinado pelo estudo do sinal da segunda derivada no domínio de $f$.
+            </p>
+
+            <!-- Caixa de Destaque: Estudo da Concavidade -->
+            <div class="callout-math bg-[#F0F9FF] border-l-[5px] border-[#0284C7] border-y border-r border-sky-200 rounded-r-xl p-4 sm:p-5 space-y-3 hover-lift">
+              <div class="flex items-center gap-2 text-[#0284C7]">
+                <svg class="w-5 h-5 shrink-0" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24" aria-hidden="true">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M7 16V4m0 0L3 8m4-4l4 4m6 0v12m0 0l4-4m-4 4l-4-4" />
+                </svg>
+                <span class="text-xs font-extrabold uppercase tracking-wider">Sinal da Segunda Derivada e Concavidade</span>
+              </div>
+              <div class="space-y-2.5">
+                <div class="flex items-center justify-between gap-2 bg-white border border-sky-100 rounded-lg px-3.5 py-2.5">
+                  <span class="font-bold text-slate-900">$f''(x) > 0$</span>
+                  <span class="text-xs sm:text-sm font-bold text-[#0284C7] bg-sky-50 border border-sky-200 px-2.5 py-0.5 rounded-md">Concavidade para cima</span>
+                </div>
+                <div class="flex items-center justify-between gap-2 bg-white border border-blue-100 rounded-lg px-3.5 py-2.5">
+                  <span class="font-bold text-slate-900">$f''(x) < 0$</span>
+                  <span class="text-xs sm:text-sm font-bold text-[#1E3A8A] bg-blue-50 border border-blue-200 px-2.5 py-0.5 rounded-md">Concavidade para baixo</span>
+                </div>
+              </div>
+            </div>
+
+            <p class="text-xs sm:text-sm text-slate-600 leading-relaxed">
+              No intervalo $(a, b)$ ao lado, em $(a, p)$ a curva possui concavidade voltada para cima e em $(p, b)$ possui concavidade voltada para baixo. Exatamente no ponto <strong>$p$</strong> as concavidades se invertem: logo, $p$ é dito <strong>ponto de inflexão</strong>, analisado a partir de $f''(x) = 0$.
+            </p>
+          </div>
+
+          <div class="lg:col-span-7">
+            <div class="bg-[#F8FAFC] border border-slate-200 rounded-xl p-3 sm:p-4">
+              <div class="flex items-center justify-between px-2 pb-2.5 border-b border-slate-200/80">
+                <span class="text-xs font-bold text-slate-700 uppercase tracking-wide">Troca de Concavidade em $(a, b)$ no Ponto $p$</span>
+              </div>
+              <div id="chart-teoria-inflexao" class="plotly-container h-72 sm:h-80 mt-2"></div>
+            </div>
+          </div>
+        </div>
+      </article>
+
+      <!-- SEÇÃO: Fluxograma Síntese (incluindo Zona de Perigo) -->
+      <article id="sec-sintese" class="scroll-section bg-white border border-slate-200 rounded-2xl p-5 sm:p-7 shadow-xs hover-card space-y-6">
+        <div class="text-center max-w-2xl mx-auto space-y-1.5">
+          <h3 class="text-xl font-extrabold text-slate-900 tracking-tight">
+            Síntese — Fluxograma de Classificação
+          </h3>
+          <p class="text-sm text-slate-600">
+            Resumo visual completo do procedimento de determinação e classificação dos pontos críticos.
+          </p>
+        </div>
+
+        <div class="flex flex-col items-center space-y-3">
+          <!-- Bloco 1 -->
+          <div class="hover-card w-full max-w-lg bg-gradient-to-r from-[#172554] to-[#1E3A8A] text-white rounded-xl p-4 sm:p-5 text-center shadow-sm border border-blue-900">
+            <p class="text-xs font-bold uppercase tracking-wider text-sky-300">Seja $f$ derivável</p>
+            <p class="text-sm sm:text-base font-bold mt-1.5">$f'(x) = 0$ determina os pontos críticos $p_1, p_2, p_3 \dots$</p>
+          </div>
+
+          <!-- Conector -->
+          <div class="text-[#2563EB]" aria-hidden="true">
+            <svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="2.4" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19 14l-7 7m0 0l-7-7m7 7V3"/></svg>
+          </div>
+
+          <!-- Bloco 2 -->
+          <div class="hover-card w-full max-w-lg bg-[#2563EB] text-white rounded-xl p-4 text-center shadow-sm border border-blue-500">
+            <p class="text-xs font-bold uppercase tracking-wider text-sky-100">Teste da 2ª Derivada</p>
+            <p class="text-sm sm:text-base font-semibold mt-1">Calcule $f''(p)$ para cada ponto crítico $p_1, p_2, p_3 \dots$</p>
+          </div>
+
+          <!-- Conector -->
+          <div class="text-[#2563EB]" aria-hidden="true">
+            <svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="2.4" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19 14l-7 7m0 0l-7-7m7 7V3"/></svg>
+          </div>
+
+          <!-- 3 Ramos Classificatórios -->
+          <div class="grid grid-cols-1 md:grid-cols-3 gap-4 w-full max-w-5xl">
+            <div class="hover-card bg-[#EFF6FF] border-2 border-[#1E3A8A]/35 rounded-xl p-5 text-center space-y-2.5">
+              <div class="text-base font-extrabold text-[#1E3A8A]">$f''(p) < 0$</div>
+              <p class="text-xs font-medium text-slate-600">Concavidade para baixo</p>
+              <div class="inline-block px-3 py-1.5 rounded-lg bg-[#1E3A8A] text-white text-xs font-bold shadow-xs">
+                $p$ é ponto de Máximo Local
+              </div>
+            </div>
+
+            <div class="hover-card bg-[#F0F9FF] border-2 border-[#0284C7]/35 rounded-xl p-5 text-center space-y-2.5">
+              <div class="text-base font-extrabold text-[#0284C7]">$f''(p) > 0$</div>
+              <p class="text-xs font-medium text-slate-600">Concavidade para cima</p>
+              <div class="inline-block px-3 py-1.5 rounded-lg bg-[#0284C7] text-white text-xs font-bold shadow-xs">
+                $p$ é ponto de Mínimo Local
+              </div>
+            </div>
+
+            <!-- Caixa de Destaque: Zona de Perigo -->
+            <div class="hover-card bg-slate-100 border-2 border-slate-500/60 border-l-[5px] border-l-slate-700 rounded-xl p-5 text-center space-y-2">
+              <div class="inline-flex items-center justify-center gap-1.5 text-slate-900">
+                <svg class="w-4 h-4 text-slate-800" fill="none" stroke="currentColor" stroke-width="2.4" viewBox="0 0 24 24" aria-hidden="true">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01M10.29 3.86l-7.1 12.27A2 2 0 004.92 19h14.16a2 2 0 001.73-2.87l-7.1-12.27a2 2 0 00-3.42 0z" />
+                </svg>
+                <span class="text-xs font-extrabold uppercase tracking-wider">Zona de Perigo!</span>
+              </div>
+              <div class="text-base font-extrabold text-slate-900">$f''(p) = 0$</div>
+              <p class="text-xs text-slate-700 font-medium leading-relaxed">
+                Desconfie: possível ponto de inflexão... ou não! Estude o sinal de $f''(x)$ antes e depois de $p$.
+              </p>
+            </div>
+          </div>
+        </div>
+      </article>
+    </section>
+
+    <!-- ===================================================================== -->
+    <!-- ABA 2: EXEMPLOS RESOLVIDOS (PASSO A PASSO)                            -->
+    <!-- ===================================================================== -->
+    <section id="tab-exemplos" class="tab-panel hidden space-y-6 animate-enter">
+      <!-- Cabeçalho da Aba -->
+      <div class="bg-white border border-slate-200 rounded-2xl p-5 sm:p-7 shadow-xs flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div class="space-y-1.5">
+          <h2 class="text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight">
+            Exemplos Resolvidos
+          </h2>
+          <p class="text-sm sm:text-base text-slate-600 max-w-2xl">
+            Selecione um dos quatro casos abaixo e acompanhe a resolução passo a passo sincronizada com o gráfico.
+          </p>
+        </div>
+        <div class="inline-flex items-center gap-2 text-xs font-semibold text-slate-600 bg-[#F8FAFC] border border-slate-200 rounded-xl px-3.5 py-2 self-start md:self-center">
+          <span class="px-1.5 py-0.5 rounded bg-white border border-slate-300 font-mono text-[11px] text-slate-700">←</span>
+          <span class="px-1.5 py-0.5 rounded bg-white border border-slate-300 font-mono text-[11px] text-slate-700">→</span>
+          <span>Navegação por teclado ativa</span>
+        </div>
+      </div>
+
+      <!-- Seletor Visual dos 4 Casos -->
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3.5" id="case-selector">
+        <!-- Preenchido via JS -->
+      </div>
+
+      <!-- Painel Interativo Passo a Passo + Gráfico Sincronizado -->
+      <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+        <!-- Coluna Esquerda: Etapas -->
+        <div class="lg:col-span-6 bg-white border border-slate-200 rounded-2xl p-5 sm:p-6 shadow-xs space-y-5">
+          <div class="flex flex-wrap items-start justify-between gap-3 border-b border-slate-100 pb-4">
+            <div class="space-y-1">
+              <span id="ex-badge" class="inline-block text-xs font-extrabold uppercase tracking-wider text-[#0284C7] bg-sky-50 border border-sky-200 px-2.5 py-0.5 rounded-md"></span>
+              <h3 id="ex-title" class="text-lg font-extrabold text-slate-900"></h3>
+            </div>
+            <span id="ex-step-counter" class="text-xs font-bold bg-[#EFF6FF] border border-blue-200 text-[#1E3A8A] px-3 py-1 rounded-lg shrink-0"></span>
+          </div>
+
+          <!-- Barra de Progresso das Etapas -->
+          <div class="space-y-2">
+            <div class="w-full h-2 bg-slate-100 rounded-full overflow-hidden">
+              <div id="ex-progress-bar" class="h-full bg-gradient-to-r from-[#1E3A8A] to-[#38BDF8] rounded-full transition-all duration-300" style="width: 20%;"></div>
+            </div>
+            <!-- Pills clicáveis de cada passo -->
+            <div id="ex-step-pills" class="flex flex-wrap gap-1.5 pt-1"></div>
+          </div>
+
+          <!-- Lista de passos revelados -->
+          <div id="ex-steps-container" class="space-y-3"></div>
+
+          <!-- Controles de Navegação -->
+          <div class="flex flex-wrap items-center justify-between gap-2.5 pt-4 border-t border-slate-100">
+            <div class="flex items-center gap-2">
+              <button id="btn-prev-step" type="button" class="hover-lift px-3.5 py-2 rounded-xl text-sm font-bold border border-slate-300 bg-white text-slate-700 hover:bg-slate-50 disabled:opacity-40 disabled:cursor-not-allowed">
+                ← Anterior
+              </button>
+              <button id="btn-reset-steps" type="button" class="hover-lift px-3 py-2 rounded-xl text-sm font-semibold border border-slate-200 bg-[#F8FAFC] text-slate-600 hover:text-slate-900 hover:bg-slate-100" title="Voltar ao passo 1">
+                Reiniciar
+              </button>
+            </div>
+
+            <div class="flex items-center gap-2">
+              <button id="btn-toggle-all" type="button" class="hover-lift px-3.5 py-2 rounded-xl text-sm font-bold text-[#1E3A8A] bg-[#EFF6FF] border border-blue-200 hover:bg-blue-100">
+                Ver Tudo
+              </button>
+              <button id="btn-next-step" type="button" class="hover-lift px-4 py-2 rounded-xl text-sm font-bold bg-[#1E3A8A] hover:bg-[#2563EB] text-white disabled:opacity-40 disabled:cursor-not-allowed shadow-xs">
+                Próximo →
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Coluna Direita: Gráfico Plotly Sincronizado -->
+        <div class="lg:col-span-6 bg-white border border-slate-200 rounded-2xl p-5 shadow-xs space-y-3.5 sticky top-20">
+          <div class="flex flex-wrap items-center justify-between gap-2 border-b border-slate-100 pb-3">
+            <div>
+              <h4 class="text-sm font-extrabold text-slate-900">Gráfico Sincronizado</h4>
+              <p id="ex-chart-caption" class="text-xs text-slate-500 mt-0.5"></p>
+            </div>
+            <label class="inline-flex items-center gap-2 text-xs font-semibold text-slate-700 bg-[#F8FAFC] border border-slate-200 px-3 py-1.5 rounded-lg cursor-pointer select-none hover:border-blue-300 transition-colors">
+              <input id="ex-show-derivative" type="checkbox" class="rounded border-slate-300 text-[#2563EB] focus:ring-[#2563EB]" />
+              <span>Sobrepor $f'(x)$</span>
+            </label>
+          </div>
+          <div id="chart-exemplos" class="plotly-container h-80 sm:h-96"></div>
+          <div id="ex-chart-legend-note" class="text-xs sm:text-sm text-slate-700 bg-[#EFF6FF] border-l-4 border-[#2563EB] rounded-r-lg px-3.5 py-2.5 font-medium"></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===================================================================== -->
+    <!-- ABA 3: PLAYGROUND INTERATIVO                                          -->
+    <!-- ===================================================================== -->
+    <section id="tab-playground" class="tab-panel hidden space-y-6 animate-enter">
+      <!-- Cabeçalho da Aba -->
+      <div class="bg-white border border-slate-200 rounded-2xl p-5 sm:p-7 shadow-xs space-y-1.5">
+        <h2 class="text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight">
+          Playground Interativo
+        </h2>
+        <p class="text-sm sm:text-base text-slate-600 max-w-3xl">
+          Digite qualquer função algébrica ou trigonométrica $f(x)$ para calcular automaticamente $f'(x)$, $f''(x)$, classificar pontos críticos e de inflexão no intervalo visível e explorar cada ponto no plano cartesiano.
+        </p>
+      </div>
+
+      <!-- Painel de Entrada, Atalhos e Pré-visualização em Tempo Real -->
+      <div class="bg-white border border-slate-200 rounded-2xl p-5 sm:p-6 shadow-xs space-y-5">
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-4 items-end">
+          <!-- Input da função -->
+          <div class="lg:col-span-6">
+            <div class="flex items-center justify-between mb-1.5">
+              <label for="pg-func-input" class="text-xs font-extrabold uppercase tracking-wider text-slate-600">
+                Expressão Matemática $f(x)$
+              </label>
+              <span id="pg-live-preview" class="text-xs text-[#1E3A8A] font-medium bg-[#EFF6FF] border border-blue-200/80 px-2.5 py-0.5 rounded-md max-w-[65%] truncate"></span>
+            </div>
+            <div class="flex items-center shadow-2xs rounded-xl overflow-hidden border border-slate-300 focus-within:ring-2 focus-within:ring-[#2563EB] focus-within:border-[#2563EB] transition-all">
+              <span class="inline-flex items-center px-3.5 py-2.5 bg-[#EFF6FF] border-r border-slate-200 text-[#1E3A8A] text-sm font-bold font-mono">
+                f(x) =
+              </span>
+              <input
+                id="pg-func-input"
+                type="text"
+                value="x^3 - 3*x"
+                placeholder="Ex: x^3 - 3*x"
+                autocomplete="off"
+                spellcheck="false"
+                class="w-full px-3.5 py-2.5 bg-white text-slate-900 text-sm font-mono focus:outline-none"
+              />
+            </div>
+          </div>
+
+          <!-- Intervalo [x_min, x_max] -->
+          <div class="lg:col-span-4 grid grid-cols-2 gap-3">
+            <div>
+              <label for="pg-xmin" class="block text-xs font-extrabold uppercase tracking-wider text-slate-600 mb-1.5">
+                $x_{\min}$
+              </label>
+              <input id="pg-xmin" type="number" step="0.5" value="-5" class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 bg-white text-slate-900 text-sm font-mono focus:outline-none focus:ring-2 focus:ring-[#2563EB]" />
+            </div>
+            <div>
+              <label for="pg-xmax" class="block text-xs font-extrabold uppercase tracking-wider text-slate-600 mb-1.5">
+                $x_{\max}$
+              </label>
+              <input id="pg-xmax" type="number" step="0.5" value="5" class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 bg-white text-slate-900 text-sm font-mono focus:outline-none focus:ring-2 focus:ring-[#2563EB]" />
+            </div>
+          </div>
+
+          <!-- Botão Analisar -->
+          <div class="lg:col-span-2">
+            <button id="pg-analyze-btn" type="button" class="hover-lift w-full px-4 py-2.5 rounded-xl bg-[#1E3A8A] hover:bg-[#2563EB] text-white text-sm font-bold shadow-xs">
+              Analisar Função
+            </button>
+          </div>
+        </div>
+
+        <!-- Barra de Atalhos Matemáticos -->
+        <div class="flex flex-wrap items-center gap-1.5">
+          <span class="text-xs font-bold text-slate-500 mr-1">Símbolos:</span>
+          <button type="button" data-insert="x^2" class="pg-shortcut hover-lift px-2.5 py-1.5 rounded-lg text-xs font-mono font-medium bg-[#F8FAFC] border border-slate-300 text-slate-800 hover:bg-[#EFF6FF] hover:border-[#2563EB] hover:text-[#1E3A8A]">x^2</button>
+          <button type="button" data-insert="x^3" class="pg-shortcut hover-lift px-2.5 py-1.5 rounded-lg text-xs font-mono font-medium bg-[#F8FAFC] border border-slate-300 text-slate-800 hover:bg-[#EFF6FF] hover:border-[#2563EB] hover:text-[#1E3A8A]">x^3</button>
+          <button type="button" data-insert="x^4" class="pg-shortcut hover-lift px-2.5 py-1.5 rounded-lg text-xs font-mono font-medium bg-[#F8FAFC] border border-slate-300 text-slate-800 hover:bg-[#EFF6FF] hover:border-[#2563EB] hover:text-[#1E3A8A]">x^4</button>
+          <button type="button" data-insert="^" class="pg-shortcut hover-lift px-2.5 py-1.5 rounded-lg text-xs font-mono font-medium bg-[#F8FAFC] border border-slate-300 text-slate-800 hover:bg-[#EFF6FF] hover:border-[#2563EB] hover:text-[#1E3A8A]">^</button>
+          <button type="button" data-insert="()" class="pg-shortcut hover-lift px-2.5 py-1.5 rounded-lg text-xs font-mono font-medium bg-[#F8FAFC] border border-slate-300 text-slate-800 hover:bg-[#EFF6FF] hover:border-[#2563EB] hover:text-[#1E3A8A]">( )</button>
+          <button type="button" data-insert="/" class="pg-shortcut hover-lift px-2.5 py-1.5 rounded-lg text-xs font-mono font-medium bg-[#F8FAFC] border border-slate-300 text-slate-800 hover:bg-[#EFF6FF] hover:border-[#2563EB] hover:text-[#1E3A8A]">/</button>
+          <button type="button" data-insert="sqrt(x)" class="pg-shortcut hover-lift px-2.5 py-1.5 rounded-lg text-xs font-mono font-medium bg-[#F8FAFC] border border-slate-300 text-slate-800 hover:bg-[#EFF6FF] hover:border-[#2563EB] hover:text-[#1E3A8A]">sqrt(x)</button>
+          <button type="button" data-insert="sin(x)" class="pg-shortcut hover-lift px-2.5 py-1.5 rounded-lg text-xs font-mono font-medium bg-[#F8FAFC] border border-slate-300 text-slate-800 hover:bg-[#EFF6FF] hover:border-[#2563EB] hover:text-[#1E3A8A]">sin(x)</button>
+          <button type="button" data-insert="cos(x)" class="pg-shortcut hover-lift px-2.5 py-1.5 rounded-lg text-xs font-mono font-medium bg-[#F8FAFC] border border-slate-300 text-slate-800 hover:bg-[#EFF6FF] hover:border-[#2563EB] hover:text-[#1E3A8A]">cos(x)</button>
+          <button type="button" data-insert="exp(x)" class="pg-shortcut hover-lift px-2.5 py-1.5 rounded-lg text-xs font-mono font-medium bg-[#F8FAFC] border border-slate-300 text-slate-800 hover:bg-[#EFF6FF] hover:border-[#2563EB] hover:text-[#1E3A8A]">exp(x)</button>
+          <button type="button" data-insert="ln(x)" class="pg-shortcut hover-lift px-2.5 py-1.5 rounded-lg text-xs font-mono font-medium bg-[#F8FAFC] border border-slate-300 text-slate-800 hover:bg-[#EFF6FF] hover:border-[#2563EB] hover:text-[#1E3A8A]">ln(x)</button>
+          <button type="button" id="pg-clear-btn" class="hover-lift px-2.5 py-1.5 rounded-lg text-xs font-bold bg-slate-100 border border-slate-300 text-slate-700 hover:bg-slate-200 hover:text-slate-900">Limpar</button>
+        </div>
+
+        <!-- Exemplos Pré-carregados -->
+        <div class="flex flex-wrap items-center gap-2 pt-3 border-t border-slate-100">
+          <span class="text-xs font-bold text-slate-500">Exemplos:</span>
+          <button type="button" data-preset="x^2 - 2*x" data-min="-2" data-max="4" class="pg-preset hover-lift px-3 py-1.5 rounded-lg text-xs font-bold bg-[#EFF6FF] border border-blue-200 text-[#1E3A8A] hover:bg-[#2563EB] hover:text-white">$x^2 - 2x$</button>
+          <button type="button" data-preset="x^3" data-min="-3" data-max="3" class="pg-preset hover-lift px-3 py-1.5 rounded-lg text-xs font-bold bg-[#EFF6FF] border border-blue-200 text-[#1E3A8A] hover:bg-[#2563EB] hover:text-white">$x^3$</button>
+          <button type="button" data-preset="x^3 - x^2" data-min="-1.5" data-max="2" class="pg-preset hover-lift px-3 py-1.5 rounded-lg text-xs font-bold bg-[#EFF6FF] border border-blue-200 text-[#1E3A8A] hover:bg-[#2563EB] hover:text-white">$x^3 - x^2$</button>
+          <button type="button" data-preset="x^3/3 - x^2/2" data-min="-1.5" data-max="2.5" class="pg-preset hover-lift px-3 py-1.5 rounded-lg text-xs font-bold bg-[#EFF6FF] border border-blue-200 text-[#1E3A8A] hover:bg-[#2563EB] hover:text-white">$\frac{x^3}{3} - \frac{x^2}{2}$</button>
+          <button type="button" data-preset="x^4 - 4*x^2" data-min="-3" data-max="3" class="pg-preset hover-lift px-3 py-1.5 rounded-lg text-xs font-bold bg-[#F8FAFC] border border-slate-200 text-slate-700 hover:bg-[#EFF6FF] hover:border-blue-300 hover:text-[#1E3A8A]">$x^4 - 4x^2$</button>
+          <button type="button" data-preset="sin(x)" data-min="-6.5" data-max="6.5" class="pg-preset hover-lift px-3 py-1.5 rounded-lg text-xs font-bold bg-[#F8FAFC] border border-slate-200 text-slate-700 hover:bg-[#EFF6FF] hover:border-blue-300 hover:text-[#1E3A8A]">$\sin(x)$</button>
+        </div>
+
+        <!-- Banner de Erro Amigável -->
+        <div id="pg-error-banner" class="hidden rounded-xl border-l-4 border-l-slate-700 border border-slate-300 bg-slate-100 text-slate-800 px-4 py-3 text-sm flex items-start gap-3">
+          <svg class="w-5 h-5 text-[#1E3A8A] shrink-0 mt-0.5" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24" aria-hidden="true">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01M10.29 3.86l-7.1 12.27A2 2 0 004.92 19h14.16a2 2 0 001.73-2.87l-7.1-12.27a2 2 0 00-3.42 0z" />
+          </svg>
+          <div>
+            <p class="font-bold text-slate-900">Expressão inválida ou intervalo incorreto</p>
+            <p id="pg-error-msg" class="text-xs sm:text-sm text-slate-600 mt-0.5"></p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Derivadas Simbólicas Calculadas em Cartões Bem Destacados -->
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div class="hover-card bg-white border border-slate-200 border-t-4 border-t-[#1E3A8A] rounded-2xl p-4 sm:p-5 shadow-xs">
+          <span class="text-xs font-extrabold uppercase tracking-wider text-[#1E3A8A]">Função Original — $f(x)$</span>
+          <div id="pg-disp-f" class="callout-math mt-2 text-slate-900 overflow-x-auto"></div>
+        </div>
+        <div class="hover-card bg-white border border-slate-200 border-t-4 border-t-[#0284C7] rounded-2xl p-4 sm:p-5 shadow-xs">
+          <span class="text-xs font-extrabold uppercase tracking-wider text-[#0284C7]">1ª Derivada — $f'(x)$</span>
+          <div id="pg-disp-df" class="callout-math mt-2 text-slate-900 overflow-x-auto"></div>
+        </div>
+        <div class="hover-card bg-white border border-slate-200 border-t-4 border-t-slate-600 rounded-2xl p-4 sm:p-5 shadow-xs">
+          <span class="text-xs font-extrabold uppercase tracking-wider text-slate-600">2ª Derivada — $f''(x)$</span>
+          <div id="pg-disp-ddf" class="callout-math mt-2 text-slate-900 overflow-x-auto"></div>
+        </div>
+      </div>
+
+      <!-- Gráfico Interativo do Playground -->
+      <div class="bg-white border border-slate-200 rounded-2xl p-4 sm:p-5 shadow-xs space-y-3.5">
+        <div class="flex flex-wrap items-center justify-between gap-3 border-b border-slate-100 pb-3.5">
+          <div class="flex items-center gap-3">
+            <h3 class="text-sm sm:text-base font-extrabold text-slate-900">Plano Cartesiano Interativo</h3>
+            <button id="pg-clear-focus-btn" type="button" class="hidden hover-lift text-xs font-bold text-[#1E3A8A] bg-[#EFF6FF] border border-blue-200 px-2.5 py-1 rounded-lg">
+              Limpar foco do ponto
+            </button>
+          </div>
+          <!-- Pills interativos para alternar curvas -->
+          <div class="flex flex-wrap items-center gap-2 text-xs">
+            <label class="hover-lift inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-blue-200 bg-[#EFF6FF] text-[#1E3A8A] font-bold cursor-pointer select-none">
+              <input id="pg-opt-f" type="checkbox" checked class="rounded border-slate-300 text-[#1E3A8A] focus:ring-[#2563EB]" />
+              <span>$f(x)$</span>
+            </label>
+            <label class="hover-lift inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-sky-200 bg-[#F0F9FF] text-[#0284C7] font-bold cursor-pointer select-none">
+              <input id="pg-opt-df" type="checkbox" class="rounded border-slate-300 text-[#0284C7] focus:ring-[#0284C7]" />
+              <span>$f'(x)$</span>
+            </label>
+            <label class="hover-lift inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-slate-200 bg-[#F8FAFC] text-slate-700 font-bold cursor-pointer select-none">
+              <input id="pg-opt-ddf" type="checkbox" class="rounded border-slate-300 text-slate-600 focus:ring-slate-500" />
+              <span>$f''(x)$</span>
+            </label>
+            <label class="hover-lift inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-slate-200 bg-[#F8FAFC] text-slate-700 font-bold cursor-pointer select-none">
+              <input id="pg-opt-tangents" type="checkbox" checked class="rounded border-slate-300 text-[#2563EB] focus:ring-[#2563EB]" />
+              <span>Retas Tangentes</span>
+            </label>
+          </div>
+        </div>
+        <div id="chart-playground" class="plotly-container h-96 sm:h-[450px]"></div>
+      </div>
+
+      <!-- Tabela Clara e Clicável de Pontos Detectados -->
+      <div class="bg-white border border-slate-200 rounded-2xl overflow-hidden shadow-xs">
+        <div class="px-5 py-4 bg-[#F8FAFC] border-b border-slate-200 flex flex-wrap items-center justify-between gap-2">
+          <div>
+            <h3 class="text-sm sm:text-base font-extrabold text-slate-900">Pontos Críticos e de Inflexão Detectados</h3>
+            <p class="text-xs text-slate-500 mt-0.5">Clique em qualquer linha para focar e destacar o ponto no gráfico acima.</p>
+          </div>
+          <span id="pg-points-count" class="text-xs font-bold text-[#1E3A8A] bg-[#EFF6FF] border border-blue-200 px-3 py-1 rounded-lg"></span>
+        </div>
+        <div class="overflow-x-auto">
+          <table class="min-w-full divide-y divide-slate-200 text-sm">
+            <thead class="bg-[#F8FAFC] text-slate-600 text-xs uppercase tracking-wider">
+              <tr>
+                <th scope="col" class="px-5 py-3.5 text-left font-extrabold">Ponto</th>
+                <th scope="col" class="px-5 py-3.5 text-left font-extrabold">Coordenadas $(x, y)$</th>
+                <th scope="col" class="px-5 py-3.5 text-left font-extrabold">Classificação</th>
+                <th scope="col" class="px-5 py-3.5 text-left font-extrabold">Justificativa Matemática</th>
+              </tr>
+            </thead>
+            <tbody id="pg-table-body" class="divide-y divide-slate-100 bg-white">
+              <!-- Preenchido via JS -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <!-- ======================================================================= -->
+  <!-- LÓGICA JAVASCRIPT MODULAR E COMPLETA                                    -->
+  <!-- ======================================================================= -->
+  <script>
+    (function () {
+      'use strict';
+
+      /* ---------------------------------------------------------------------
+       * 1. CONSTANTES DE PALETA, CONFIGURAÇÃO PLOTLY E UTILITÁRIOS
+       * --------------------------------------------------------------------- */
+      const COLORS = {
+        primary: '#1E3A8A',      // Azul institucional profundo (Curva f(x) / Máximo Global)
+        royal: '#2563EB',        // Azul royal (Máximo Local)
+        indigoDeep: '#312E81',   // Índigo profundo (Mínimo Global)
+        sky: '#0284C7',          // Azul-celeste (Mínimo Local / f'(x))
+        skyBright: '#38BDF8',    // Azul-celeste vivo (Tangentes / Destaques)
+        slateDark: '#334155',    // Azul-ardósia escuro (Inflexão / f''(x))
+        slateMid: '#64748B',     // Cinza-ardósia
+        text: '#0F172A'
+      };
+
+      const PLOTLY_CONFIG = {
+        responsive: true,
+        displaylogo: false,
+        modeBarButtonsToRemove: ['lasso2d', 'select2d', 'autoScale2d']
+      };
+
+      // Cria configuração padronizada de tooltip com alto contraste (fundo escuro + texto branco)
+      function makeHoverLabel(bgcolor = '#0F172A') {
+        return {
+          bgcolor,
+          bordercolor: '#FFFFFF',
+          font: {
+            family: 'Inter, system-ui, -apple-system, sans-serif',
+            size: 13,
+            color: '#FFFFFF'
+          },
+          align: 'left'
+        };
+      }
+
+      function baseLayout(overrides = {}) {
+        return Object.assign({
+          margin: { l: 48, r: 22, t: 22, b: 44 },
+          paper_bgcolor: '#FFFFFF',
+          plot_bgcolor: '#FFFFFF',
+          font: { family: 'Inter, system-ui, sans-serif', size: 12, color: COLORS.text },
+          xaxis: {
+            title: { text: 'x', font: { size: 12, color: COLORS.slateDark } },
+            zeroline: true,
+            zerolinecolor: '#94A3B8',
+            zerolinewidth: 1.5,
+            gridcolor: '#F1F5F9'
+          },
+          yaxis: {
+            title: { text: 'y', font: { size: 12, color: COLORS.slateDark } },
+            zeroline: true,
+            zerolinecolor: '#94A3B8',
+            zerolinewidth: 1.5,
+            gridcolor: '#F1F5F9'
+          },
+          hovermode: 'closest',
+          hoverlabel: makeHoverLabel('#0F172A'),
+          legend: { orientation: 'h', y: -0.22, x: 0.5, xanchor: 'center', font: { size: 11 } }
+        }, overrides);
+      }
+
+      function renderMath(targetEl = document.body) {
+        if (typeof window.renderMathInElement === 'function' && targetEl) {
+          try {
+            window.renderMathInElement(targetEl, {
+              delimiters: [
+                { left: '$$', right: '$$', display: true },
+                { left: '$', right: '$', display: false }
+              ],
+              throwOnError: false
+            });
+          } catch (err) {
+            console.warn('Erro ao renderizar KaTeX:', err);
+          }
+        }
+      }
+
+      function fmtNum(val) {
+        if (typeof val !== 'number' || !Number.isFinite(val)) return '—';
+        if (Math.abs(val) < 1e-6) return '0';
+        const rounded = Math.round(val * 1000) / 1000;
+        if (Math.abs(rounded) < 1e-6) return '0';
+        return Number.isInteger(rounded) ? String(rounded) : rounded.toFixed(2).replace(/\.?0+$/, '');
+      }
+
+      function findLocalExtremum(fn, a, b, isMax) {
+        let bestX = a;
+        let bestY = fn(a);
+        const steps = 400;
+        const h = (b - a) / steps;
+        for (let i = 1; i <= steps; i++) {
+          const x = a + i * h;
+          const y = fn(x);
+          if ((isMax && y > bestY) || (!isMax && y < bestY)) {
+            bestY = y;
+            bestX = x;
+          }
+        }
+        return bestX;
+      }
+
+      /* ---------------------------------------------------------------------
+       * 2. ESTADO GLOBAL E NAVEGAÇÃO ENTRE ABAS
+       * --------------------------------------------------------------------- */
+      let activeTab = 'teoria';
+      let theoryRendered = false;
+      let examplesRendered = false;
+      let playgroundRendered = false;
+
+      function updateReadingProgress() {
+        const bar = document.getElementById('reading-progress-bar');
+        if (!bar) return;
+        if (activeTab !== 'teoria') {
+          bar.style.opacity = '0';
+          bar.style.width = '0%';
+          return;
+        }
+        const docHeight = document.documentElement.scrollHeight - window.innerHeight;
+        const pct = docHeight > 0 ? Math.min(100, Math.max(0, (window.scrollY / docHeight) * 100)) : 0;
+        bar.style.opacity = '1';
+        bar.style.width = pct.toFixed(1) + '%';
+      }
+
+      function resizeVisibleCharts() {
+        const chartIds = {
+          teoria: [
+            'chart-teoria-regiao-a',
+            'chart-teoria-local-global',
+            'chart-teoria-tangentes',
+            'chart-teoria-inflexao'
+          ],
+          exemplos: ['chart-exemplos'],
+          playground: ['chart-playground']
+        }[activeTab] || [];
+
+        chartIds.forEach(id => {
+          const el = document.getElementById(id);
+          if (el && el.data) {
+            try {
+              Plotly.Plots.resize(el);
+            } catch (_) {
+              // Ignora redimensionamento antes do plot inicial
+            }
+          }
+        });
+      }
+
+      function switchTab(tabName) {
+        activeTab = tabName;
+
+        document.querySelectorAll('.tab-panel').forEach(panel => {
+          panel.classList.add('hidden');
+        });
+        const target = document.getElementById(`tab-${tabName}`);
+        if (target) {
+          target.classList.remove('hidden');
+        }
+
+        // Atualiza botões desktop
+        document.querySelectorAll('.nav-tab-btn').forEach(btn => {
+          const isTarget = btn.dataset.tab === tabName;
+          btn.classList.toggle('is-active', isTarget);
+          btn.classList.toggle('bg-white/15', isTarget);
+          btn.classList.toggle('text-white', isTarget);
+          btn.classList.toggle('text-sky-100/90', !isTarget);
+        });
+
+        // Atualiza botões mobile
+        document.querySelectorAll('.nav-tab-btn-mobile').forEach(btn => {
+          const isTarget = btn.dataset.tab === tabName;
+          btn.classList.toggle('bg-[#2563EB]', isTarget);
+          btn.classList.toggle('text-white', isTarget);
+          btn.classList.toggle('text-sky-100', !isTarget);
+        });
+
+        // Fecha menu mobile
+        const mobileMenu = document.getElementById('mobile-menu');
+        const mobileBtn = document.getElementById('mobile-menu-btn');
+        const iconOpen = document.getElementById('mobile-menu-icon-open');
+        const iconClose = document.getElementById('mobile-menu-icon-close');
+        if (mobileMenu && !mobileMenu.classList.contains('hidden')) {
+          mobileMenu.classList.add('hidden');
+          if (mobileBtn) mobileBtn.setAttribute('aria-expanded', 'false');
+          if (iconOpen) iconOpen.classList.remove('hidden');
+          if (iconClose) iconClose.classList.add('hidden');
+        }
+
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+
+        if (tabName === 'teoria' && !theoryRendered) {
+          initTheorySection();
+          theoryRendered = true;
+        } else if (tabName === 'exemplos' && !examplesRendered) {
+          initExamplesSection();
+          examplesRendered = true;
+        } else if (tabName === 'playground' && !playgroundRendered) {
+          initPlaygroundSection();
+          playgroundRendered = true;
+        }
+
+        setTimeout(() => {
+          resizeVisibleCharts();
+          updateReadingProgress();
+        }, 60);
+      }
+
+      /* ---------------------------------------------------------------------
+       * 3. ABA 1 — VISÃO GERAL (TEORIA E GRÁFICOS)
+       * --------------------------------------------------------------------- */
+      // Curva suave ilustrativa para p1..p6 (Locais e Globais + Tangentes)
+      // Pontos de interesse: p1 (-2.2, extremo esquerdo), p2 (mínimo global),
+      // p3 (máximo local), p4 (mínimo local), p5 (máximo global), p6 (extremo direito)
+      function evalSixCurve(x) {
+        return (
+          0.38 * x +
+          1.65 * Math.exp(-0.78 * Math.pow(x - 1.25, 2)) +
+          2.65 * Math.exp(-0.95 * Math.pow(x - 4.15, 2)) -
+          1.45 * Math.exp(-0.85 * Math.pow(x + 1.35, 2))
+        );
+      }
+
+      const SIX_POINTS_DEF = [
+        {
+          id: 'p1',
+          label: 'p₁',
+          x: -2.2,
+          type: 'Máximo Local',
+          kind: 'max-local',
+          desc: 'Maior valor na sua vizinhança imediata à esquerda (não é o maior de todo o domínio).'
+        },
+        {
+          id: 'p2',
+          label: 'p₂',
+          x: findLocalExtremum(evalSixCurve, -2.0, -0.5, false),
+          type: 'Mínimo Global',
+          kind: 'min-global',
+          desc: 'Menor valor que a função atinge em todo o domínio analisado.'
+        },
+        {
+          id: 'p3',
+          label: 'p₃',
+          x: findLocalExtremum(evalSixCurve, 0.3, 2.1, true),
+          type: 'Máximo Local',
+          kind: 'max-local',
+          desc: 'Maior valor em sua região, mas menor que o valor atingido em p₅.'
+        },
+        {
+          id: 'p4',
+          label: 'p₄',
+          x: findLocalExtremum(evalSixCurve, 2.0, 3.3, false),
+          type: 'Mínimo Local',
+          kind: 'min-local',
+          desc: 'Menor valor em sua região, mas maior que o valor atingido em p₂.'
+        },
+        {
+          id: 'p5',
+          label: 'p₅',
+          x: findLocalExtremum(evalSixCurve, 3.5, 4.9, true),
+          type: 'Máximo Global',
+          kind: 'max-global',
+          desc: 'Maior valor que a função atinge em todo o domínio analisado.'
+        },
+        {
+          id: 'p6',
+          label: 'p₆',
+          x: 5.3,
+          type: 'Mínimo Local',
+          kind: 'min-local',
+          desc: 'Menor valor em sua vizinhança imediata à direita (não é o menor de todo o domínio).'
+        }
+      ];
+
+      let selectedPointId = null;
+      let hoveredPointId = null;
+      let showTangentsTeoria = true;
+
+      function getActivePointId() {
+        return hoveredPointId || selectedPointId;
+      }
+
+      // Gráfico 1: Região A com p1 (máximo) e p2 (mínimo)
+      function plotRegiaoA() {
+        const fA = x =>
+          2.1 * Math.exp(-0.45 * Math.pow(x + 0.65, 2)) +
+          1.35 * Math.exp(-0.65 * Math.pow(x - 2.75, 2)) +
+          0.15 * x -
+          0.12 * (x < -1.8 ? Math.pow(x + 1.8, 2) : 0);
+
+        const xs = [];
+        const ys = [];
+        for (let x = -3.0; x <= 4.1; x += 0.04) {
+          xs.push(x);
+          ys.push(fA(x));
+        }
+
+        const aStart = -1.7;
+        const aEnd = 3.5;
+        const p1x = findLocalExtremum(fA, -1.5, 0.5, true);
+        const p2x = findLocalExtremum(fA, 0.2, 2.2, false);
+
+        const traces = [
+          {
+            x: xs,
+            y: ys,
+            type: 'scatter',
+            mode: 'lines',
+            name: 'f(x)',
+            line: { color: COLORS.primary, width: 3.2 },
+            hovertemplate: '<b>f(x)</b><br>x = %{x:.2f}<br>y = %{y:.2f}<extra></extra>',
+            hoverlabel: makeHoverLabel('#0F172A')
+          },
+          {
+            x: [p1x],
+            y: [fA(p1x)],
+            type: 'scatter',
+            mode: 'markers+text',
+            name: 'p₁ (Máximo em A)',
+            text: ['p₁ (Máximo)'],
+            textposition: 'top center',
+            textfont: { size: 12, color: COLORS.primary },
+            marker: { color: COLORS.primary, size: 12, symbol: 'triangle-up', line: { color: '#FFFFFF', width: 1.8 } },
+            hovertext: ['<b>p₁ — Ponto de Máximo na região A</b><br>Maior valor atingido por f(x) em A'],
+            hoverinfo: 'text',
+            hoverlabel: makeHoverLabel('#1E3A8A')
+          },
+          {
+            x: [p2x],
+            y: [fA(p2x)],
+            type: 'scatter',
+            mode: 'markers+text',
+            name: 'p₂ (Mínimo em A)',
+            text: ['p₂ (Mínimo)'],
+            textposition: 'bottom center',
+            textfont: { size: 12, color: COLORS.sky },
+            marker: { color: COLORS.sky, size: 12, symbol: 'triangle-down', line: { color: '#FFFFFF', width: 1.8 } },
+            hovertext: ['<b>p₂ — Ponto de Mínimo na região A</b><br>Menor valor atingido por f(x) em A'],
+            hoverinfo: 'text',
+            hoverlabel: makeHoverLabel('#0369A1')
+          }
+        ];
+
+        const layout = baseLayout({
+          xaxis: {
+            range: [-3.1, 4.2],
+            title: { text: 'x' },
+            zeroline: true,
+            zerolinecolor: '#94A3B8',
+            gridcolor: '#F1F5F9',
+            showticklabels: false
+          },
+          yaxis: {
+            range: [-0.8, 2.75],
+            title: { text: 'y' },
+            zeroline: true,
+            zerolinecolor: '#94A3B8',
+            gridcolor: '#F1F5F9',
+            showticklabels: false
+          },
+          shapes: [
+            // Região A destacada
+            {
+              type: 'rect',
+              x0: aStart,
+              x1: aEnd,
+              y0: -0.8,
+              y1: 2.75,
+              fillcolor: 'rgba(224, 242, 254, 0.35)',
+              line: { width: 0 },
+              layer: 'below'
+            },
+            // Fronteiras da região A
+            { type: 'line', x0: aStart, x1: aStart, y0: 0, y1: fA(aStart), line: { color: '#94A3B8', width: 1.4, dash: 'dash' } },
+            { type: 'line', x0: aEnd, x1: aEnd, y0: 0, y1: fA(aEnd), line: { color: '#94A3B8', width: 1.4, dash: 'dash' } },
+            // Projeções de p1 e p2 no eixo x
+            { type: 'line', x0: p1x, x1: p1x, y0: 0, y1: fA(p1x), line: { color: COLORS.primary, width: 1.4, dash: 'dot' } },
+            { type: 'line', x0: p2x, x1: p2x, y0: 0, y1: fA(p2x), line: { color: COLORS.sky, width: 1.4, dash: 'dot' } },
+            // Barra inferior indicando a região A
+            { type: 'line', x0: aStart, x1: aEnd, y0: -0.45, y1: -0.45, line: { color: COLORS.primary, width: 2.2 } }
+          ],
+          annotations: [
+            {
+              x: (aStart + aEnd) / 2,
+              y: -0.62,
+              text: '<b>Região A</b>',
+              showarrow: false,
+              font: { size: 12, color: COLORS.primary }
+            },
+            {
+              x: p1x,
+              y: -0.18,
+              text: '<b>p₁</b>',
+              showarrow: false,
+              font: { size: 12, color: COLORS.primary }
+            },
+            {
+              x: p2x,
+              y: -0.18,
+              text: '<b>p₂</b>',
+              showarrow: false,
+              font: { size: 12, color: COLORS.sky }
+            }
+          ]
+        });
+
+        Plotly.react('chart-teoria-regiao-a', traces, layout, PLOTLY_CONFIG);
+      }
+
+      // Gráfico 2: Locais vs. Globais (p1 a p6)
+      function plotLocalGlobal() {
+        const xs = [];
+        const ys = [];
+        for (let x = -2.2; x <= 5.3; x += 0.04) {
+          xs.push(x);
+          ys.push(evalSixCurve(x));
+        }
+
+        const activeId = getActivePointId();
+
+        const traces = [
+          {
+            x: xs,
+            y: ys,
+            type: 'scatter',
+            mode: 'lines',
+            name: 'f(x)',
+            line: { color: COLORS.primary, width: 3.2 },
+            hovertemplate: '<b>f(x)</b><br>x = %{x:.2f}<br>y = %{y:.2f}<extra></extra>',
+            hoverlabel: makeHoverLabel('#0F172A')
+          }
+        ];
+
+        const shapes = [];
+
+        SIX_POINTS_DEF.forEach(pt => {
+          const yVal = evalSixCurve(pt.x);
+          const isHighlighted = !activeId || activeId === pt.id;
+          const isFocused = activeId === pt.id;
+          const isMax = pt.kind.includes('max');
+          const isGlobal = pt.kind.includes('global');
+
+          let ptColor = COLORS.royal;
+          if (pt.kind === 'max-global') ptColor = COLORS.primary;
+          else if (pt.kind === 'min-global') ptColor = COLORS.indigoDeep;
+          else if (pt.kind === 'min-local') ptColor = COLORS.sky;
+
+          traces.push({
+            x: [pt.x],
+            y: [yVal],
+            type: 'scatter',
+            mode: 'markers+text',
+            name: `${pt.label} (${pt.type})`,
+            showlegend: false,
+            text: [isFocused ? `${pt.label} • ${pt.type}` : pt.label],
+            textposition: isMax ? 'top center' : 'bottom center',
+            textfont: {
+              size: isFocused ? 13 : (isHighlighted ? 12 : 10),
+              color: isHighlighted ? COLORS.text : '#94A3B8'
+            },
+            marker: {
+              size: isFocused ? 16 : (isHighlighted ? (isGlobal ? 13 : 10.5) : 7),
+              color: ptColor,
+              opacity: isHighlighted ? 1 : 0.25,
+              symbol: isMax ? 'triangle-up' : 'triangle-down',
+              line: { color: isFocused ? '#38BDF8' : '#FFFFFF', width: isFocused ? 3 : 1.6 }
+            },
+            hovertext: [`<b>${pt.label} — ${pt.type}</b><br>${pt.desc}`],
+            hoverinfo: 'text',
+            hoverlabel: makeHoverLabel(isMax ? '#1E3A8A' : '#0369A1')
+          });
+
+          shapes.push({
+            type: 'line',
+            x0: pt.x,
+            x1: pt.x,
+            y0: 0,
+            y1: yVal,
+            line: {
+              color: isHighlighted ? ptColor : '#CBD5E1',
+              width: isFocused ? 2.2 : 1.3,
+              dash: 'dash'
+            }
+          });
+        });
+
+        const layout = baseLayout({
+          showlegend: false,
+          xaxis: {
+            range: [-2.7, 5.8],
+            title: { text: 'x' },
+            zeroline: true,
+            zerolinecolor: '#94A3B8',
+            gridcolor: '#F1F5F9',
+            showticklabels: false
+          },
+          yaxis: {
+            range: [-2.6, 5.1],
+            title: { text: 'y' },
+            zeroline: true,
+            zerolinecolor: '#94A3B8',
+            gridcolor: '#F1F5F9',
+            showticklabels: false
+          },
+          shapes
+        });
+
+        Plotly.react('chart-teoria-local-global', traces, layout, PLOTLY_CONFIG);
+      }
+
+      function renderLocalGlobalCards() {
+        const container = document.getElementById('local-global-cards');
+        if (!container) return;
+        container.innerHTML = '';
+
+        SIX_POINTS_DEF.forEach(pt => {
+          const isSelected = selectedPointId === pt.id;
+          let badgeClass = 'bg-[#DBEAFE] text-[#1E3A8A] border border-blue-200';
+          if (pt.kind === 'max-global') badgeClass = 'bg-[#1E3A8A] text-white';
+          else if (pt.kind === 'min-global') badgeClass = 'bg-[#312E81] text-white';
+          else if (pt.kind === 'min-local') badgeClass = 'bg-[#E0F2FE] text-[#0284C7] border border-sky-200';
+
+          const btn = document.createElement('button');
+          btn.type = 'button';
+          btn.className = `interactive-item w-full text-left px-3.5 py-2.5 rounded-xl border border-slate-200 bg-white flex items-center justify-between gap-2 ${isSelected ? 'is-selected' : ''}`;
+          btn.innerHTML = `
+            <span class="font-extrabold text-sm text-slate-900">${pt.label}</span>
+            <span class="px-2.5 py-0.5 rounded-md text-xs font-bold ${badgeClass}">${pt.type}</span>
+          `;
+
+          btn.addEventListener('mouseenter', () => {
+            hoveredPointId = pt.id;
+            plotLocalGlobal();
+          });
+          btn.addEventListener('mouseleave', () => {
+            hoveredPointId = null;
+            plotLocalGlobal();
+          });
+          btn.addEventListener('click', () => {
+            selectedPointId = selectedPointId === pt.id ? null : pt.id;
+            renderLocalGlobalCards();
+            plotLocalGlobal();
+          });
+
+          container.appendChild(btn);
+        });
+      }
+
+      // Gráfico 3: Retas Tangentes Horizontais nos Pontos Críticos
+      function plotTangentes() {
+        const xs = [];
+        const ys = [];
+        for (let x = -2.2; x <= 5.3; x += 0.04) {
+          xs.push(x);
+          ys.push(evalSixCurve(x));
+        }
+
+        const traces = [
+          {
+            x: xs,
+            y: ys,
+            type: 'scatter',
+            mode: 'lines',
+            name: 'f(x)',
+            line: { color: COLORS.primary, width: 3.2 },
+            hovertemplate: '<b>f(x)</b><br>x = %{x:.2f}<br>y = %{y:.2f}<extra></extra>',
+            hoverlabel: makeHoverLabel('#0F172A')
+          }
+        ];
+
+        const shapes = [];
+        SIX_POINTS_DEF.forEach(pt => {
+          const yVal = evalSixCurve(pt.x);
+          const isMax = pt.kind.includes('max');
+
+          traces.push({
+            x: [pt.x],
+            y: [yVal],
+            type: 'scatter',
+            mode: 'markers+text',
+            showlegend: false,
+            text: [pt.label],
+            textposition: isMax ? 'top center' : 'bottom center',
+            marker: { size: 9.5, color: isMax ? COLORS.primary : COLORS.sky, line: { color: '#FFFFFF', width: 1.6 } },
+            hovertext: [`<b>${pt.label} — Ponto Crítico</b><br>Inclinação da tangente = 0<br>f'(${pt.label}) = 0`],
+            hoverinfo: 'text',
+            hoverlabel: makeHoverLabel(isMax ? '#1E3A8A' : '#0369A1')
+          });
+
+          shapes.push({
+            type: 'line',
+            x0: pt.x,
+            x1: pt.x,
+            y0: 0,
+            y1: yVal,
+            line: { color: '#CBD5E1', width: 1.3, dash: 'dash' }
+          });
+
+          if (showTangentsTeoria) {
+            shapes.push({
+              type: 'line',
+              x0: pt.x - 0.65,
+              x1: pt.x + 0.65,
+              y0: yVal,
+              y1: yVal,
+              line: { color: COLORS.sky, width: 2.8 }
+            });
+          }
+        });
+
+        const layout = baseLayout({
+          showlegend: false,
+          xaxis: {
+            range: [-3.0, 6.1],
+            title: { text: 'x' },
+            zeroline: true,
+            zerolinecolor: '#94A3B8',
+            gridcolor: '#F1F5F9',
+            showticklabels: false
+          },
+          yaxis: {
+            range: [-2.6, 5.1],
+            title: { text: 'y' },
+            zeroline: true,
+            zerolinecolor: '#94A3B8',
+            gridcolor: '#F1F5F9',
+            showticklabels: false
+          },
+          shapes
+        });
+
+        Plotly.react('chart-teoria-tangentes', traces, layout, PLOTLY_CONFIG);
+      }
+
+      // Gráfico 4: Concavidade e Ponto de Inflexão em (a, b)
+      function plotInflexaoTeoria() {
+        const fInf = x => -0.45 * Math.pow(x - 2, 3) + 0.9 * (x - 2) + 2.0;
+        const a = 0.2;
+        const p = 2.0;
+        const b = 3.7;
+        const xLeft = [];
+        const yLeft = [];
+        const xRight = [];
+        const yRight = [];
+
+        for (let x = a; x <= p; x += 0.03) {
+          xLeft.push(x);
+          yLeft.push(fInf(x));
+        }
+        for (let x = p; x <= b; x += 0.03) {
+          xRight.push(x);
+          yRight.push(fInf(x));
+        }
+
+        const traces = [
+          {
+            x: xLeft,
+            y: yLeft,
+            type: 'scatter',
+            mode: 'lines',
+            name: "Concavidade para cima — f''(x) > 0 em (a, p)",
+            line: { color: COLORS.sky, width: 3.6 },
+            hovertemplate: "<b>f(x) em (a, p)</b><br>x = %{x:.2f}<br>y = %{y:.2f}<br>Concavidade para cima (f''(x) > 0)<extra></extra>",
+            hoverlabel: makeHoverLabel('#0369A1')
+          },
+          {
+            x: xRight,
+            y: yRight,
+            type: 'scatter',
+            mode: 'lines',
+            name: "Concavidade para baixo — f''(x) < 0 em (p, b)",
+            line: { color: COLORS.primary, width: 3.6 },
+            hovertemplate: "<b>f(x) em (p, b)</b><br>x = %{x:.2f}<br>y = %{y:.2f}<br>Concavidade para baixo (f''(x) < 0)<extra></extra>",
+            hoverlabel: makeHoverLabel('#1E3A8A')
+          },
+          {
+            x: [p],
+            y: [fInf(p)],
+            type: 'scatter',
+            mode: 'markers+text',
+            name: 'Ponto de Inflexão p',
+            text: ['p (Inflexão)'],
+            textposition: 'top left',
+            textfont: { size: 12, color: COLORS.slateDark },
+            marker: { color: COLORS.slateDark, size: 13, symbol: 'diamond', line: { color: '#FFFFFF', width: 2 } },
+            hovertext: ['<b>Ponto p — Ponto de Inflexão</b><br>Troca de concavidade: para cima em (a, p) → para baixo em (p, b)'],
+            hoverinfo: 'text',
+            hoverlabel: makeHoverLabel('#334155')
+          }
+        ];
+
+        const layout = baseLayout({
+          xaxis: {
+            range: [-0.2, 4.1],
+            title: { text: 'x' },
+            zeroline: true,
+            zerolinecolor: '#94A3B8',
+            gridcolor: '#F1F5F9',
+            showticklabels: false
+          },
+          yaxis: {
+            range: [-0.9, 3.6],
+            title: { text: 'y' },
+            zeroline: true,
+            zerolinecolor: '#94A3B8',
+            gridcolor: '#F1F5F9',
+            showticklabels: false
+          },
+          shapes: [
+            {
+              type: 'rect',
+              x0: a,
+              x1: p,
+              y0: -0.9,
+              y1: 3.6,
+              fillcolor: 'rgba(224, 242, 254, 0.35)',
+              line: { width: 0 },
+              layer: 'below'
+            },
+            {
+              type: 'rect',
+              x0: p,
+              x1: b,
+              y0: -0.9,
+              y1: 3.6,
+              fillcolor: 'rgba(219, 234, 254, 0.35)',
+              line: { width: 0 },
+              layer: 'below'
+            },
+            {
+              type: 'line',
+              x0: p,
+              x1: p,
+              y0: 0,
+              y1: fInf(p),
+              line: { color: COLORS.slateDark, width: 1.6, dash: 'dash' }
+            },
+            {
+              type: 'line',
+              x0: a,
+              x1: b,
+              y0: -0.45,
+              y1: -0.45,
+              line: { color: COLORS.slateDark, width: 2 }
+            }
+          ],
+          annotations: [
+            { x: p, y: -0.2, text: '<b>p</b>', showarrow: false, font: { size: 12, color: COLORS.slateDark } },
+            { x: (a + b) / 2, y: -0.68, text: '<b>Intervalo (a, b)</b>', showarrow: false, font: { size: 11.5, color: COLORS.slateDark } },
+            { x: 1.05, y: 3.2, text: '<b>Concavidade p/ cima</b>', showarrow: false, font: { size: 11, color: COLORS.sky } },
+            { x: 2.9, y: 3.2, text: '<b>Concavidade p/ baixo</b>', showarrow: false, font: { size: 11, color: COLORS.primary } }
+          ]
+        });
+
+        Plotly.react('chart-teoria-inflexao', traces, layout, PLOTLY_CONFIG);
+      }
+
+      function initTheorySection() {
+        plotRegiaoA();
+        renderLocalGlobalCards();
+        plotLocalGlobal();
+        plotTangentes();
+        plotInflexaoTeoria();
+
+        const btnReset = document.getElementById('btn-reset-p-highlight');
+        if (btnReset) {
+          btnReset.addEventListener('click', () => {
+            selectedPointId = null;
+            hoveredPointId = null;
+            renderLocalGlobalCards();
+            plotLocalGlobal();
+          });
+        }
+
+        const btnTangents = document.getElementById('btn-toggle-tangents');
+        const lblTangents = document.getElementById('btn-toggle-tangents-label');
+        const badgeTangents = document.getElementById('tangent-status-badge');
+        if (btnTangents) {
+          btnTangents.addEventListener('click', () => {
+            showTangentsTeoria = !showTangentsTeoria;
+            if (lblTangents) {
+              lblTangents.textContent = showTangentsTeoria
+                ? 'Ocultar Retas Tangentes Horizontais'
+                : 'Mostrar Retas Tangentes Horizontais';
+            }
+            if (badgeTangents) {
+              badgeTangents.textContent = showTangentsTeoria ? 'Tangentes visíveis' : 'Tangentes ocultas';
+            }
+            plotTangentes();
+          });
+        }
+      }
+
+      /* ---------------------------------------------------------------------
+       * 4. ABA 2 — EXEMPLOS RESOLVIDOS (PASSO A PASSO)
+       * --------------------------------------------------------------------- */
+      const EXAMPLES = [
+        {
+          id: 'ex1',
+          badge: 'Exemplo 1',
+          shortMath: '$f(x) = x^2 - 2x$',
+          subtitle: 'Mínimo Local pelo Teste da 2ª Derivada',
+          title: 'Determine os pontos críticos de $f(x) = x^2 - 2x$ e classifique-os',
+          fn: x => x * x - 2 * x,
+          dfn: x => 2 * x - 2,
+          xRange: [-0.8, 2.8],
+          yRange: [-1.4, 2.2],
+          criticals: [
+            {
+              x: 1,
+              y: -1,
+              label: 'Mínimo Local (1, -1)',
+              typeLabel: 'Ponto de Mínimo Local',
+              kind: 'min',
+              justification: "f'(1) = 0 e f''(1) = 2 > 0 (concavidade para cima)"
+            }
+          ],
+          inflections: [],
+          concavitySplit: null,
+          steps: [
+            {
+              title: '1º passo: Calcule $f\'(x)$',
+              body: 'Aplicando a Regra do Tombo em $f(x) = x^2 - 2x$: $$f\'(x) = 2x - 2$$',
+              chartCaption: 'Curva da função original $f(x) = x^2 - 2x$.',
+              legendNote: 'A curva é uma parábola com concavidade voltada para cima.'
+            },
+            {
+              title: '2º passo: Calcule os valores de $x$ para $f\'(x) = 0$',
+              body: 'Igualamos a primeira derivada a zero: $$2x - 2 = 0 \\implies 2x = 2 \\implies x = \\frac{2}{2} \\implies x = 1$$',
+              chartCaption: 'Buscando o ponto onde a reta tangente é horizontal ($f\'(x) = 0$).',
+              legendNote: 'A derivada se anula exatamente em $x = 1$.'
+            },
+            {
+              title: '3º passo: Identifique os pontos críticos',
+              body: 'O valor encontrado é o único ponto crítico da função: $$p = 1 \\quad \\text{com } f(1) = 1^2 - 2(1) = -1$$',
+              chartCaption: 'Ponto crítico $p = 1$ marcado com reta tangente horizontal.',
+              legendNote: 'No ponto $(1, -1)$, a reta tangente não possui inclinação ($f\'(1) = 0$).'
+            },
+            {
+              title: '4º passo: Calcule $f\'\'(x)$',
+              body: 'Derivando novamente $f\'(x) = 2x - 2$ pela Regra do Tombo: $$f\'\'(x) = 2$$',
+              chartCaption: 'Segunda derivada constante e positiva ($f\'\'(x) = 2 > 0$).',
+              legendNote: 'Como $f\'\'(x) = 2 > 0$ para todo $x$, a concavidade é voltada para cima em todo o domínio.'
+            },
+            {
+              title: '5º passo: Classifique o ponto crítico',
+              body: 'Avaliando a segunda derivada em $p = 1$: $$f\'\'(1) = 2 > 0 \\; (\\text{POSITIVO})$$ Logo, $p = 1$ é um <strong>Ponto de Mínimo Local</strong> em $(1, -1)$. Fim do teste!',
+              chartCaption: 'Classificação final: Ponto de Mínimo Local em $(1, -1)$.',
+              legendNote: 'Resultado confirmado: $(1, -1)$ é ponto de mínimo (concavidade para cima).'
+            }
+          ]
+        },
+        {
+          id: 'ex2',
+          badge: 'Exemplo 2',
+          shortMath: '$f(x) = x^3$',
+          subtitle: 'Zona de Perigo e Ponto de Inflexão',
+          title: 'Determine e classifique os pontos críticos de $f(x) = x^3$',
+          fn: x => x * x * x,
+          dfn: x => 3 * x * x,
+          xRange: [-2.2, 2.2],
+          yRange: [-4, 4],
+          criticals: [
+            {
+              x: 0,
+              y: 0,
+              label: 'Ponto de Inflexão (0, 0)',
+              typeLabel: 'Ponto de Inflexão',
+              kind: 'inflection',
+              justification: "f'(0) = 0, f''(0) = 0 e troca de concavidade: para baixo (x < 0) → para cima (x > 0)"
+            }
+          ],
+          inflections: [
+            {
+              x: 0,
+              y: 0,
+              label: 'Ponto de Inflexão (0, 0)',
+              justification: "f''(0) = 0 com troca de concavidade: para baixo (x < 0) → para cima (x > 0)"
+            }
+          ],
+          concavitySplit: 0,
+          steps: [
+            {
+              title: '1º passo: Calcule $f\'(x)$',
+              body: 'Derivando $f(x) = x^3$: $$f\'(x) = 3x^2$$',
+              chartCaption: 'Curva cúbica $f(x) = x^3$.',
+              legendNote: 'Observe o comportamento crescente da função ao longo de todo o domínio.'
+            },
+            {
+              title: '2º passo: Igualar $f\'(x) = 0$',
+              body: 'Resolvendo a equação da primeira derivada: $$3x^2 = 0 \\implies x = 0$$',
+              chartCaption: 'Procurando os pontos onde $f\'(x) = 0$.',
+              legendNote: 'A derivada primeira se anula apenas na origem ($x = 0$).'
+            },
+            {
+              title: '3º passo: Identifique o ponto crítico',
+              body: 'O único ponto crítico encontrado é: $$p_1 = 0 \\quad \\text{com } f(0) = 0^3 = 0$$',
+              chartCaption: 'Ponto crítico $p_1 = 0$ com reta tangente horizontal.',
+              legendNote: 'Em $(0, 0)$, a reta tangente coincide com o eixo $x$, mas a curva não forma pico nem vale.'
+            },
+            {
+              title: '4º passo: Calcule $f\'\'(x)$ e avalie em $p_1$',
+              body: 'Calculando a segunda derivada: $$f\'\'(x) = 6x \\implies f\'\'(0) = 6 \\cdot 0 = 0$$ <strong>Zona de Perigo:</strong> desconfia-se que pode ser um ponto de inflexão, mas ainda não podemos afirmar! É necessário estudar o sinal de $f\'\'(x)$.',
+              chartCaption: 'Estudo do sinal da segunda derivada $f\'\'(x) = 6x$.',
+              legendNote: 'Para $x < 0$, $f\'\'(x) < 0$ (concavidade para baixo). Para $x > 0$, $f\'\'(x) > 0$ (concavidade para cima).'
+            },
+            {
+              title: '5º passo: Estudo do sinal de $f\'\'(x)$ e conclusão',
+              body: 'Analisando os sinais de $f\'\'(x) = 6x$: $$6x < 0 \\implies x < 0 \\; (\\text{Concavidade para baixo})$$ $$6x > 0 \\implies x > 0 \\; (\\text{Concavidade para cima})$$ Como no ponto crítico $p = 0$ houve troca de concavidade, logo $p = 0$ é um <strong>Ponto de Inflexão</strong>!',
+              chartCaption: 'Classificação final: Ponto de Inflexão em $(0, 0)$.',
+              legendNote: 'Troca de concavidade confirmada em $(0, 0)$: concavidade para baixo à esquerda e para cima à direita.'
+            }
+          ]
+        },
+        {
+          id: 'ex3',
+          badge: 'Exemplo 3',
+          shortMath: '$f(x) = x^3 - x^2$',
+          subtitle: 'Máximo Local, Mínimo Local e Inflexão',
+          title: 'Determine e classifique os pontos críticos de $f(x) = x^3 - x^2$',
+          fn: x => x * x * x - x * x,
+          dfn: x => 3 * x * x - 2 * x,
+          xRange: [-0.8, 1.5],
+          yRange: [-0.5, 0.6],
+          criticals: [
+            {
+              x: 0,
+              y: 0,
+              label: 'Máximo Local (0, 0)',
+              typeLabel: 'Ponto de Máximo Local',
+              kind: 'max',
+              justification: "f'(0) = 0 e f''(0) = -2 < 0 (concavidade para baixo)"
+            },
+            {
+              x: 2 / 3,
+              y: -4 / 27,
+              label: 'Mínimo Local (0.67, -0.15)',
+              typeLabel: 'Ponto de Mínimo Local',
+              kind: 'min',
+              justification: "f'(0.67) = 0 e f''(0.67) = 2 > 0 (concavidade para cima)"
+            }
+          ],
+          inflections: [
+            {
+              x: 1 / 3,
+              y: -2 / 27,
+              label: 'Inflexão (0.33, -0.07)',
+              justification: "f''(0.33) = 0 com troca de concavidade: para baixo (x < 0.33) → para cima (x > 0.33)"
+            }
+          ],
+          concavitySplit: 1 / 3,
+          steps: [
+            {
+              title: '1º passo: Calcule $f\'(x)$',
+              body: 'Derivando $f(x) = x^3 - x^2$: $$f\'(x) = 3x^2 - 2x$$',
+              chartCaption: 'Curva da função $f(x) = x^3 - x^2$.',
+              legendNote: 'A função apresenta uma região de pico e uma região de vale.'
+            },
+            {
+              title: '2º passo: Calcule os valores de $x$ para $f\'(x) = 0$',
+              body: 'Colocando $x$ em evidência: $$3x^2 - 2x = 0 \\implies x(3x - 2) = 0$$ Logo, $x = 0$ ou $3x - 2 = 0 \\implies x = \\frac{2}{3} \\approx 0{,}67$.',
+              chartCaption: 'Raízes da primeira derivada: $x = 0$ e $x = \\frac{2}{3}$.',
+              legendNote: 'Temos dois pontos com reta tangente horizontal.'
+            },
+            {
+              title: '3º passo: Identifique os pontos críticos',
+              body: 'Os pontos críticos encontrados são: $$p_1 = 0 \\; \\text{com } f(0) = 0 \\qquad \\text{e} \\qquad p_2 = \\frac{2}{3} \\; \\text{com } f\\!\\left(\\frac{2}{3}\\right) = -\\frac{4}{27} \\approx -0{,}15$$',
+              chartCaption: 'Pontos críticos $p_1 = 0$ e $p_2 \\approx 0{,}67$ com tangentes horizontais.',
+              legendNote: 'As duas retas tangentes horizontais indicam os candidatos a máximo e mínimo.'
+            },
+            {
+              title: '4º passo: Calcule $f\'\'(x)$ e estude a concavidade',
+              body: 'Derivando novamente: $$f\'\'(x) = 6x - 2$$ Avaliando nos pontos críticos: $f\'\'(0) = -2$ e $f\'\'\\!\\left(\\frac{2}{3}\\right) = 2$. Além disso, $f\'\'(x) = 0 \\implies x = \\frac{1}{3} \\approx 0{,}33$.',
+              chartCaption: 'Divisão de concavidade em $x = \\frac{1}{3} \\approx 0{,}33$.',
+              legendNote: 'Para $x < \\frac{1}{3}$, $f\'\'(x) < 0$ (concavidade para baixo). Para $x > \\frac{1}{3}$, $f\'\'(x) > 0$ (concavidade para cima).'
+            },
+            {
+              title: '5º passo: Classificação completa',
+              body: '• $f\'\'(0) = -2 < 0 \\implies p_1 = 0$ é <strong>Ponto de Máximo Local</strong> em $(0, 0)$.<br/>• $f\'\'\\!\\left(\\frac{2}{3}\\right) = 2 > 0 \\implies p_2 = \\frac{2}{3}$ é <strong>Ponto de Mínimo Local</strong> em $(0{,}67;\\; -0{,}15)$.<br/>• Em $x = \\frac{1}{3}$ ocorre troca de concavidade $\\implies$ <strong>Ponto de Inflexão</strong> em $(0{,}33;\\; -0{,}07)$.',
+              chartCaption: 'Classificação final completa de todos os pontos.',
+              legendNote: 'Máximo local em $(0, 0)$, mínimo local em $(0{,}67;\\; -0{,}15)$ e inflexão em $(0{,}33;\\; -0{,}07)$.'
+            }
+          ]
+        },
+        {
+          id: 'ex4',
+          badge: 'Exemplo 4',
+          shortMath: '$f(x) = \\frac{x^3}{3} - \\frac{x^2}{2}$',
+          subtitle: 'Polinômio Cúbico com Frações',
+          title: 'Determine e classifique os pontos críticos de $f(x) = \\frac{x^3}{3} - \\frac{x^2}{2}$',
+          fn: x => (x * x * x) / 3 - (x * x) / 2,
+          dfn: x => x * x - x,
+          xRange: [-0.9, 2.0],
+          yRange: [-0.45, 0.55],
+          criticals: [
+            {
+              x: 0,
+              y: 0,
+              label: 'Máximo Local (0, 0)',
+              typeLabel: 'Ponto de Máximo Local',
+              kind: 'max',
+              justification: "f'(0) = 0 e f''(0) = -1 < 0 (concavidade para baixo)"
+            },
+            {
+              x: 1,
+              y: -1 / 6,
+              label: 'Mínimo Local (1, -0.17)',
+              typeLabel: 'Ponto de Mínimo Local',
+              kind: 'min',
+              justification: "f'(1) = 0 e f''(1) = 1 > 0 (concavidade para cima)"
+            }
+          ],
+          inflections: [
+            {
+              x: 0.5,
+              y: -1 / 12,
+              label: 'Inflexão (0.5, -0.08)',
+              justification: "f''(0.5) = 0 com troca de concavidade: para baixo (x < 0.5) → para cima (x > 0.5)"
+            }
+          ],
+          concavitySplit: 0.5,
+          steps: [
+            {
+              title: '1º passo: Calcule $f\'(x)$',
+              body: 'Aplicando a Regra do Tombo em $f(x) = \\frac{x^3}{3} - \\frac{x^2}{2}$: $$f\'(x) = \\frac{3x^2}{3} - \\frac{2x}{2} = x^2 - x$$',
+              chartCaption: 'Curva da função $f(x) = \\frac{x^3}{3} - \\frac{x^2}{2}$.',
+              legendNote: 'A derivação simplifica os denominadores, resultando em $f\'(x) = x^2 - x$.'
+            },
+            {
+              title: '2º passo: Calcule os valores de $x$ para $f\'(x) = 0$',
+              body: 'Fatorando $f\'(x) = 0$: $$x^2 - x = 0 \\implies x(x - 1) = 0$$ Logo, $x = 0$ ou $x = 1$.',
+              chartCaption: 'Buscando os zeros da primeira derivada ($x = 0$ e $x = 1$).',
+              legendNote: 'Existem dois pontos críticos no domínio da função.'
+            },
+            {
+              title: '3º passo: Identifique os pontos críticos',
+              body: 'Os pontos críticos são: $$p_1 = 0 \\; \\text{com } f(0) = 0 \\qquad \\text{e} \\qquad p_2 = 1 \\; \\text{com } f(1) = \\frac{1}{3} - \\frac{1}{2} = -\\frac{1}{6} \\approx -0{,}17$$',
+              chartCaption: 'Pontos críticos $p_1 = 0$ e $p_2 = 1$ destacados com tangentes horizontais.',
+              legendNote: 'Ambos os pontos possuem derivada igual a zero.'
+            },
+            {
+              title: '4º passo: Calcule $f\'\'(x)$ e estude a concavidade',
+              body: 'Derivando $f\'(x) = x^2 - x$: $$f\'\'(x) = 2x - 1$$ Avaliando nos pontos críticos: $f\'\'(0) = -1$ e $f\'\'(1) = 1$. Igualando $f\'\'(x) = 0$, obtemos $x = \\frac{1}{2} = 0{,}5$.',
+              chartCaption: 'Regiões de concavidade separadas em $x = 0{,}5$.',
+              legendNote: 'Para $x < 0{,}5$, $f\'\'(x) < 0$ (concavidade para baixo). Para $x > 0{,}5$, $f\'\'(x) > 0$ (concavidade para cima).'
+            },
+            {
+              title: '5º passo: Classificação final',
+              body: '• $f\'\'(0) = -1 < 0 \\implies p_1 = 0$ é <strong>Ponto de Máximo Local</strong> em $(0, 0)$.<br/>• $f\'\'(1) = 1 > 0 \\implies p_2 = 1$ é <strong>Ponto de Mínimo Local</strong> em $(1;\\; -0{,}17)$.<br/>• Em $x = 0{,}5$ ocorre mudança de concavidade $\\implies$ <strong>Ponto de Inflexão</strong> em $(0{,}5;\\; -0{,}08)$.',
+              chartCaption: 'Classificação final: Máximo Local, Mínimo Local e Ponto de Inflexão.',
+              legendNote: 'Todos os pontos críticos e de inflexão identificados e validados pelo teste da 2ª derivada.'
+            }
+          ]
+        }
+      ];
+
+      let currentExIdx = 0;
+      let currentStepIdx = 0;
+      let showAllStepsMode = false;
+
+      function renderCaseSelector() {
+        const container = document.getElementById('case-selector');
+        if (!container) return;
+        container.innerHTML = '';
+
+        EXAMPLES.forEach((ex, idx) => {
+          const isActive = idx === currentExIdx;
+          const btn = document.createElement('button');
+          btn.type = 'button';
+          btn.className = `hover-card text-left p-4 rounded-2xl border-2 transition-all ${
+            isActive
+              ? 'bg-[#EFF6FF] border-[#1E3A8A] shadow-sm'
+              : 'bg-white border-slate-200 hover:border-blue-300'
+          }`;
+          btn.innerHTML = `
+            <span class="inline-block text-[11px] font-extrabold uppercase tracking-wider px-2 py-0.5 rounded-md ${
+              isActive ? 'bg-[#1E3A8A] text-white' : 'bg-slate-100 text-slate-600'
+            }">${ex.badge}</span>
+            <div class="mt-2 text-base font-bold text-slate-900">${ex.shortMath}</div>
+            <p class="mt-1 text-xs text-slate-600 leading-snug">${ex.subtitle}</p>
+          `;
+          btn.addEventListener('click', () => {
+            currentExIdx = idx;
+            currentStepIdx = 0;
+            showAllStepsMode = false;
+            renderExampleView();
+          });
+          container.appendChild(btn);
+        });
+
+        renderMath(container);
+      }
+
+      function renderExampleChart() {
+        const ex = EXAMPLES[currentExIdx];
+        const step = showAllStepsMode ? ex.steps.length - 1 : currentStepIdx;
+        const showDfEl = document.getElementById('ex-show-derivative');
+        const showDf = showDfEl ? showDfEl.checked : false;
+
+        const [xMin, xMax] = ex.xRange;
+        const [yMin, yMax] = ex.yRange;
+        const xs = [];
+        const ys = [];
+        const dys = [];
+        const n = 300;
+        const h = (xMax - xMin) / n;
+
+        for (let i = 0; i <= n; i++) {
+          const x = xMin + i * h;
+          xs.push(x);
+          ys.push(ex.fn(x));
+          dys.push(ex.dfn(x));
+        }
+
+        const traces = [
+          {
+            x: xs,
+            y: ys,
+            type: 'scatter',
+            mode: 'lines',
+            name: 'f(x)',
+            line: { color: COLORS.primary, width: 3.2 },
+            hovertemplate: '<b>f(x)</b><br>x = %{x:.2f}<br>y = %{y:.2f}<extra></extra>',
+            hoverlabel: makeHoverLabel('#0F172A')
+          }
+        ];
+
+        if (showDf) {
+          traces.push({
+            x: xs,
+            y: dys,
+            type: 'scatter',
+            mode: 'lines',
+            name: "f'(x)",
+            line: { color: COLORS.sky, width: 2.2, dash: 'dash' },
+            hovertemplate: "<b>f'(x)</b><br>x = %{x:.2f}<br>y = %{y:.2f}<extra></extra>",
+            hoverlabel: makeHoverLabel('#0369A1')
+          });
+        }
+
+        const shapes = [];
+        const annotations = [];
+
+        // A partir do Passo 3 (índice 2): pontos críticos e retas tangentes horizontais
+        if (step >= 2) {
+          const span = (xMax - xMin) * 0.14;
+          const isFinal = step === ex.steps.length - 1;
+
+          ex.criticals.forEach(c => {
+            shapes.push({
+              type: 'line',
+              x0: c.x - span,
+              x1: c.x + span,
+              y0: c.y,
+              y1: c.y,
+              line: { color: COLORS.sky, width: 2.5 }
+            });
+
+            let symbol = 'circle';
+            let color = COLORS.royal;
+            let labelText = `p = ${fmtNum(c.x)}`;
+            let tipBg = '#1E3A8A';
+            let tipText = `<b>Ponto Crítico</b><br>Coordenadas: (${fmtNum(c.x)}, ${fmtNum(c.y)})<br>f'(${fmtNum(c.x)}) = 0 (reta tangente horizontal)`;
+
+            if (isFinal) {
+              if (c.kind === 'max') {
+                symbol = 'triangle-up';
+                color = COLORS.primary;
+                labelText = c.label;
+                tipBg = '#1E3A8A';
+              } else if (c.kind === 'min') {
+                symbol = 'triangle-down';
+                color = COLORS.sky;
+                labelText = c.label;
+                tipBg = '#0369A1';
+              } else {
+                symbol = 'diamond';
+                color = COLORS.slateDark;
+                labelText = c.label;
+                tipBg = '#334155';
+              }
+              tipText = `<b>${c.typeLabel}</b><br>Coordenadas: (${fmtNum(c.x)}, ${fmtNum(c.y)})<br>${c.justification}`;
+            }
+
+            traces.push({
+              x: [c.x],
+              y: [c.y],
+              type: 'scatter',
+              mode: 'markers+text',
+              name: isFinal ? c.label : `Ponto crítico (x = ${fmtNum(c.x)})`,
+              text: [labelText],
+              textposition: c.kind === 'min' ? 'bottom center' : 'top center',
+              marker: { size: 12, color, symbol, line: { color: '#FFFFFF', width: 1.8 } },
+              hovertext: [tipText],
+              hoverinfo: 'text',
+              hoverlabel: makeHoverLabel(tipBg)
+            });
+          });
+        }
+
+        // A partir do Passo 4 (índice 3): regiões sombreadas de concavidade (quando aplicável)
+        if (step >= 3 && ex.concavitySplit !== null) {
+          const s = ex.concavitySplit;
+          shapes.push(
+            {
+              type: 'rect',
+              x0: xMin,
+              x1: s,
+              y0: yMin,
+              y1: yMax,
+              fillcolor: 'rgba(219, 234, 254, 0.30)',
+              line: { width: 0 },
+              layer: 'below'
+            },
+            {
+              type: 'rect',
+              x0: s,
+              x1: xMax,
+              y0: yMin,
+              y1: yMax,
+              fillcolor: 'rgba(224, 242, 254, 0.38)',
+              line: { width: 0 },
+              layer: 'below'
+            },
+            {
+              type: 'line',
+              x0: s,
+              x1: s,
+              y0: yMin,
+              y1: yMax,
+              line: { color: COLORS.slateMid, width: 1.3, dash: 'dot' }
+            }
+          );
+
+          annotations.push(
+            {
+              x: (xMin + s) / 2,
+              y: yMax - (yMax - yMin) * 0.08,
+              text: "<b>f''(x) < 0</b> (p/ baixo)",
+              showarrow: false,
+              font: { size: 11, color: COLORS.primary }
+            },
+            {
+              x: (s + xMax) / 2,
+              y: yMax - (yMax - yMin) * 0.08,
+              text: "<b>f''(x) > 0</b> (p/ cima)",
+              showarrow: false,
+              font: { size: 11, color: COLORS.sky }
+            }
+          );
+        }
+
+        // Passo 5 final: pontos de inflexão adicionais (para ex3 e ex4)
+        if (step === ex.steps.length - 1 && ex.inflections.length > 0 && ex.id !== 'ex2') {
+          ex.inflections.forEach(inf => {
+            traces.push({
+              x: [inf.x],
+              y: [inf.y],
+              type: 'scatter',
+              mode: 'markers+text',
+              name: inf.label,
+              text: [inf.label],
+              textposition: 'top right',
+              marker: { size: 12, color: COLORS.slateDark, symbol: 'diamond', line: { color: '#FFFFFF', width: 1.8 } },
+              hovertext: [`<b>Ponto de Inflexão</b><br>Coordenadas: (${fmtNum(inf.x)}, ${fmtNum(inf.y)})<br>${inf.justification}`],
+              hoverinfo: 'text',
+              hoverlabel: makeHoverLabel('#334155')
+            });
+          });
+        }
+
+        const layout = baseLayout({
+          xaxis: { range: [xMin, xMax], title: { text: 'x' }, zeroline: true, zerolinecolor: '#94A3B8', gridcolor: '#F1F5F9' },
+          yaxis: { range: [yMin, yMax], title: { text: 'y' }, zeroline: true, zerolinecolor: '#94A3B8', gridcolor: '#F1F5F9' },
+          shapes,
+          annotations
+        });
+
+        Plotly.react('chart-exemplos', traces, layout, PLOTLY_CONFIG);
+      }
+
+      function renderExampleView() {
+        const ex = EXAMPLES[currentExIdx];
+        const total = ex.steps.length;
+        const visibleUpTo = showAllStepsMode ? total - 1 : currentStepIdx;
+
+        renderCaseSelector();
+
+        const badgeEl = document.getElementById('ex-badge');
+        const titleEl = document.getElementById('ex-title');
+        const counterEl = document.getElementById('ex-step-counter');
+        const progressBar = document.getElementById('ex-progress-bar');
+        const pillsContainer = document.getElementById('ex-step-pills');
+        const stepsContainer = document.getElementById('ex-steps-container');
+        const captionEl = document.getElementById('ex-chart-caption');
+        const noteEl = document.getElementById('ex-chart-legend-note');
+
+        if (badgeEl) badgeEl.textContent = ex.badge;
+        if (titleEl) titleEl.innerHTML = ex.title;
+        if (counterEl) counterEl.textContent = showAllStepsMode ? `Todos os ${total} passos` : `Passo ${currentStepIdx + 1} de ${total}`;
+        if (progressBar) progressBar.style.width = `${((visibleUpTo + 1) / total) * 100}%`;
+
+        // Pills clicáveis para saltar diretamente para um passo
+        if (pillsContainer) {
+          pillsContainer.innerHTML = '';
+          ex.steps.forEach((_, idx) => {
+            const isActive = !showAllStepsMode && idx === currentStepIdx;
+            const isCompleted = idx <= visibleUpTo;
+            const pill = document.createElement('button');
+            pill.type = 'button';
+            pill.textContent = `Passo ${idx + 1}`;
+            pill.className = `px-2.5 py-1 rounded-lg text-xs font-bold transition-colors ${
+              isActive
+                ? 'bg-[#1E3A8A] text-white shadow-2xs'
+                : isCompleted
+                  ? 'bg-[#EFF6FF] text-[#1E3A8A] border border-blue-200 hover:bg-blue-100'
+                  : 'bg-slate-100 text-slate-500 border border-slate-200 hover:bg-slate-200'
+            }`;
+            pill.addEventListener('click', () => {
+              showAllStepsMode = false;
+              currentStepIdx = idx;
+              renderExampleView();
+            });
+            pillsContainer.appendChild(pill);
+          });
+        }
+
+        // Renderiza os passos revelados até visibleUpTo
+        if (stepsContainer) {
+          stepsContainer.innerHTML = '';
+          for (let i = 0; i <= visibleUpTo; i++) {
+            const st = ex.steps[i];
+            const isCurrent = i === visibleUpTo;
+            const card = document.createElement('div');
+            card.className = `rounded-xl p-4 border transition-all animate-enter ${
+              isCurrent
+                ? 'bg-[#EFF6FF] border-[#2563EB] border-l-4 shadow-2xs'
+                : 'bg-[#F8FAFC] border-slate-200'
+            }`;
+            card.innerHTML = `
+              <h4 class="text-sm font-extrabold ${isCurrent ? 'text-[#1E3A8A]' : 'text-slate-800'}">${st.title}</h4>
+              <div class="mt-2 text-sm text-slate-700 leading-relaxed">${st.body}</div>
+            `;
+            stepsContainer.appendChild(card);
+          }
+        }
+
+        const activeStepData = ex.steps[visibleUpTo];
+        if (captionEl) captionEl.innerHTML = activeStepData.chartCaption;
+        if (noteEl) noteEl.innerHTML = activeStepData.legendNote;
+
+        // Estado dos botões de controle
+        const btnPrev = document.getElementById('btn-prev-step');
+        const btnNext = document.getElementById('btn-next-step');
+        const btnToggleAll = document.getElementById('btn-toggle-all');
+
+        if (btnPrev) btnPrev.disabled = showAllStepsMode || currentStepIdx === 0;
+        if (btnNext) btnNext.disabled = showAllStepsMode || currentStepIdx === total - 1;
+        if (btnToggleAll) btnToggleAll.textContent = showAllStepsMode ? 'Passo a Passo' : 'Ver Tudo';
+
+        renderMath(document.getElementById('tab-exemplos'));
+        renderExampleChart();
+      }
+
+      function initExamplesSection() {
+        renderExampleView();
+
+        const btnPrev = document.getElementById('btn-prev-step');
+        const btnNext = document.getElementById('btn-next-step');
+        const btnReset = document.getElementById('btn-reset-steps');
+        const btnToggleAll = document.getElementById('btn-toggle-all');
+        const showDfEl = document.getElementById('ex-show-derivative');
+
+        if (btnPrev) {
+          btnPrev.addEventListener('click', () => {
+            if (currentStepIdx > 0) {
+              showAllStepsMode = false;
+              currentStepIdx--;
+              renderExampleView();
+            }
+          });
+        }
+
+        if (btnNext) {
+          btnNext.addEventListener('click', () => {
+            const total = EXAMPLES[currentExIdx].steps.length;
+            if (currentStepIdx < total - 1) {
+              showAllStepsMode = false;
+              currentStepIdx++;
+              renderExampleView();
+            }
+          });
+        }
+
+        if (btnReset) {
+          btnReset.addEventListener('click', () => {
+            showAllStepsMode = false;
+            currentStepIdx = 0;
+            renderExampleView();
+          });
+        }
+
+        if (btnToggleAll) {
+          btnToggleAll.addEventListener('click', () => {
+            showAllStepsMode = !showAllStepsMode;
+            renderExampleView();
+          });
+        }
+
+        if (showDfEl) {
+          showDfEl.addEventListener('change', () => {
+            renderExampleChart();
+          });
+        }
+      }
+
+      /* ---------------------------------------------------------------------
+       * 5. ABA 3 — PLAYGROUND INTERATIVO (MOTOR SIMBÓLICO E NUMÉRICO)
+       * --------------------------------------------------------------------- */
+      let pgLastState = null;
+      let pgFocusedIndex = null;
+
+      // Normaliza a sintaxe digitada pelo usuário para o parser do Math.js
+      function normalizeExpr(raw) {
+        return raw
+          .trim()
+          .replace(/−/g, '-')
+          .replace(/×/g, '*')
+          .replace(/\bln\s*\(/gi, 'log(');
+      }
+
+      function updateLivePreview() {
+        const inputEl = document.getElementById('pg-func-input');
+        const previewEl = document.getElementById('pg-live-preview');
+        if (!inputEl || !previewEl) return;
+
+        const expr = normalizeExpr(inputEl.value);
+        if (!expr) {
+          previewEl.textContent = 'Digite uma função';
+          return;
+        }
+        try {
+          const parsed = math.parse(expr);
+          const tex = parsed.toTex({ parenthesis: 'auto' });
+          previewEl.innerHTML = `$f(x) = ${tex}$`;
+          renderMath(previewEl);
+        } catch (_) {
+          previewEl.textContent = 'Digitando expressão...';
+        }
+      }
+
+      function showPgError(message) {
+        const banner = document.getElementById('pg-error-banner');
+        const msgEl = document.getElementById('pg-error-msg');
+        if (banner && msgEl) {
+          msgEl.textContent = message;
+          banner.classList.remove('hidden');
+        }
+      }
+
+      function hidePgError() {
+        const banner = document.getElementById('pg-error-banner');
+        if (banner) banner.classList.add('hidden');
+      }
+
+      // Encontra raízes reais de g(x) = 0 no intervalo [xMin, xMax]
+      // Detecta tanto raízes simples (troca de sinal) quanto raízes de multiplicidade par (tangência ao eixo x)
+      function findRootsInInterval(gFn, xMin, xMax) {
+        const roots = [];
+        const samples = 1400;
+        const step = (xMax - xMin) / samples;
+        const xs = new Array(samples + 1);
+        const ys = new Array(samples + 1);
+
+        for (let i = 0; i <= samples; i++) {
+          const x = xMin + i * step;
+          xs[i] = x;
+          let y = NaN;
+          try {
+            y = gFn(x);
+          } catch (_) {
+            y = NaN;
+          }
+          ys[i] = Number.isFinite(y) ? y : NaN;
+        }
+
+        // 1) Mudança de sinal + Bisseção
+        for (let i = 0; i < samples; i++) {
+          const y1 = ys[i];
+          const y2 = ys[i + 1];
+          if (!Number.isFinite(y1) || !Number.isFinite(y2)) continue;
+
+          if (Math.abs(y1) < 1e-10) {
+            roots.push(xs[i]);
+            continue;
+          }
+
+          if (y1 * y2 < 0) {
+            let a = xs[i];
+            let b = xs[i + 1];
+            let fa = y1;
+            for (let iter = 0; iter < 50; iter++) {
+              const mid = 0.5 * (a + b);
+              const fm = gFn(mid);
+              if (!Number.isFinite(fm)) break;
+              if (Math.abs(fm) < 1e-12 || b - a < 1e-11) {
+                a = mid;
+                b = mid;
+                break;
+              }
+              if (fa * fm <= 0) {
+                b = mid;
+              } else {
+                a = mid;
+                fa = fm;
+              }
+            }
+            const r = 0.5 * (a + b);
+            const fr = gFn(r);
+            // Descarta descontinuidades (assíntotas verticais)
+            if (Number.isFinite(fr) && Math.abs(fr) < 1e-3) {
+              roots.push(r);
+            }
+          }
+        }
+
+        // 2) Raízes de multiplicidade par (mínimos locais de |g(x)| muito próximos de 0)
+        for (let i = 1; i < samples; i++) {
+          const ym = ys[i - 1];
+          const yc = ys[i];
+          const yp = ys[i + 1];
+          if (!Number.isFinite(ym) || !Number.isFinite(yc) || !Number.isFinite(yp)) continue;
+
+          if (Math.abs(yc) <= Math.abs(ym) && Math.abs(yc) <= Math.abs(yp) && Math.abs(yc) < 0.05) {
+            // Busca ternária para minimizar |g(x)| em [xs[i-1], xs[i+1]]
+            let lo = xs[i - 1];
+            let hi = xs[i + 1];
+            for (let iter = 0; iter < 45; iter++) {
+              const m1 = lo + (hi - lo) / 3;
+              const m2 = hi - (hi - lo) / 3;
+              const v1 = Math.abs(gFn(m1));
+              const v2 = Math.abs(gFn(m2));
+              if (!Number.isFinite(v1) || !Number.isFinite(v2)) break;
+              if (v1 < v2) hi = m2;
+              else lo = m1;
+            }
+            const r = 0.5 * (lo + hi);
+            const fr = gFn(r);
+            if (Number.isFinite(fr) && Math.abs(fr) < 1e-4) {
+              roots.push(r);
+            }
+          }
+        }
+
+        // Ordena e remove duplicatas próximas
+        roots.sort((a, b) => a - b);
+        const tol = Math.max(1e-3, (xMax - xMin) * 1e-3);
+        const unique = [];
+        for (const r of roots) {
+          if (r <= xMin + 1e-5 || r >= xMax - 1e-5) continue;
+          if (unique.length === 0 || Math.abs(r - unique[unique.length - 1]) > tol) {
+            unique.push(r);
+          }
+        }
+        return unique;
+      }
+
+      function compileSafe(node) {
+        const compiled = node.compile();
+        return x => {
+          try {
+            const val = compiled.evaluate({ x });
+            return typeof val === 'number' && Number.isFinite(val) ? val : NaN;
+          } catch (_) {
+            return NaN;
+          }
+        };
+      }
+
+      function analyzePlayground() {
+        hidePgError();
+        const inputEl = document.getElementById('pg-func-input');
+        const xMinEl = document.getElementById('pg-xmin');
+        const xMaxEl = document.getElementById('pg-xmax');
+
+        const rawExpr = inputEl ? inputEl.value : '';
+        const expr = normalizeExpr(rawExpr);
+        const xMin = parseFloat(xMinEl ? xMinEl.value : '-5');
+        const xMax = parseFloat(xMaxEl ? xMaxEl.value : '5');
+
+        if (!expr) {
+          showPgError('Digite uma expressão matemática válida em função de x. Exemplo: x^3 - 3*x');
+          return;
+        }
+        if (!Number.isFinite(xMin) || !Number.isFinite(xMax) || xMin >= xMax) {
+          showPgError('O intervalo é inválido. Certifique-se de que x_min seja estritamente menor que x_max.');
+          return;
+        }
+        if (xMax - xMin > 200) {
+          showPgError('Intervalo muito amplo para análise precisa. Utilize um intervalo de largura máxima igual a 200.');
+          return;
+        }
+
+        let fNode, dfNode, ddfNode;
+        let fFn, dfFn, ddfFn;
+        let fTex, dfTex, ddfTex;
+
+        try {
+          fNode = math.parse(expr);
+          fFn = compileSafe(fNode);
+
+          // Testa se a expressão é avaliável em pelo menos alguns pontos reais do intervalo
+          let validCount = 0;
+          for (let i = 0; i <= 20; i++) {
+            const tx = xMin + (i / 20) * (xMax - xMin);
+            if (Number.isFinite(fFn(tx))) validCount++;
+          }
+          if (validCount < 2) {
+            throw new Error('A função não retorna valores reais válidos neste intervalo. Verifique o domínio (ex.: sqrt(x) ou ln(x) exigem x > 0) ou use a variável x.');
+          }
+
+          fTex = fNode.toTex({ parenthesis: 'auto' });
+
+          // Derivadas simbólicas com fallback numérico se necessário
+          try {
+            dfNode = math.simplify(math.derivative(fNode, 'x'));
+            dfFn = compileSafe(dfNode);
+            dfTex = dfNode.toTex({ parenthesis: 'auto' });
+          } catch (_) {
+            const h = 1e-5;
+            dfFn = x => (fFn(x + h) - fFn(x - h)) / (2 * h);
+            dfTex = '\\text{Aproximação numérica}';
+          }
+
+          try {
+            if (dfNode) {
+              ddfNode = math.simplify(math.derivative(dfNode, 'x'));
+              ddfFn = compileSafe(ddfNode);
+              ddfTex = ddfNode.toTex({ parenthesis: 'auto' });
+            } else {
+              throw new Error('fallback');
+            }
+          } catch (_) {
+            const h = 1e-4;
+            ddfFn = x => (fFn(x + h) - 2 * fFn(x) + fFn(x - h)) / (h * h);
+            ddfTex = '\\text{Aproximação numérica}';
+          }
+        } catch (err) {
+          showPgError(err && err.message ? err.message : 'Não foi possível interpretar a expressão. Use * para multiplicação (ex.: 2*x) e ^ para potências (ex.: x^3).');
+          return;
+        }
+
+        // Atualiza cartões simbólicos
+        const dispF = document.getElementById('pg-disp-f');
+        const dispDf = document.getElementById('pg-disp-df');
+        const dispDdf = document.getElementById('pg-disp-ddf');
+        if (dispF) dispF.innerHTML = `$$f(x) = ${fTex}$$`;
+        if (dispDf) dispDf.innerHTML = `$$f'(x) = ${dfTex}$$`;
+        if (dispDdf) dispDdf.innerHTML = `$$f''(x) = ${ddfTex}$$`;
+        renderMath(document.getElementById('tab-playground'));
+
+        // Amostragem para o gráfico e extremos globais no intervalo
+        const plotN = 500;
+        const xs = [];
+        const yF = [];
+        const yDf = [];
+        const yDdf = [];
+        let globalMaxY = -Infinity;
+        let globalMinY = Infinity;
+
+        for (let i = 0; i <= plotN; i++) {
+          const x = xMin + (i / plotN) * (xMax - xMin);
+          const vF = fFn(x);
+          const vDf = dfFn(x);
+          const vDdf = ddfFn(x);
+          xs.push(x);
+          yF.push(Number.isFinite(vF) && Math.abs(vF) < 1e5 ? vF : null);
+          yDf.push(Number.isFinite(vDf) && Math.abs(vDf) < 1e5 ? vDf : null);
+          yDdf.push(Number.isFinite(vDdf) && Math.abs(vDdf) < 1e5 ? vDdf : null);
+
+          if (Number.isFinite(vF)) {
+            if (vF > globalMaxY) globalMaxY = vF;
+            if (vF < globalMinY) globalMinY = vF;
+          }
+        }
+
+        // Busca raízes de f'(x) = 0 (pontos críticos) e f''(x) = 0 (candidatos a inflexão)
+        const critRoots = findRootsInInterval(dfFn, xMin, xMax);
+        const inflRoots = findRootsInInterval(ddfFn, xMin, xMax);
+        const hTest = Math.max(1e-3, (xMax - xMin) * 1e-3);
+
+        const detectedPoints = [];
+
+        critRoots.forEach(p => {
+          const y = fFn(p);
+          if (!Number.isFinite(y)) return;
+          const ddfVal = ddfFn(p);
+
+          let classification = '';
+          let kind = '';
+          let isGlobal = false;
+          let justification = '';
+          let hoverJustification = '';
+
+          if (Number.isFinite(ddfVal) && Math.abs(ddfVal) > 1e-4) {
+            if (ddfVal < 0) {
+              kind = 'max';
+              classification = 'Máximo Local';
+              justification = `$f'(p) = 0$ e $f''(p) = ${fmtNum(ddfVal)} < 0$ (concavidade para baixo)`;
+              hoverJustification = `f'(p) = 0 e f''(p) ≈ ${fmtNum(ddfVal)} < 0 (concavidade para baixo)`;
+            } else {
+              kind = 'min';
+              classification = 'Mínimo Local';
+              justification = `$f'(p) = 0$ e $f''(p) = ${fmtNum(ddfVal)} > 0$ (concavidade para cima)`;
+              hoverJustification = `f'(p) = 0 e f''(p) ≈ ${fmtNum(ddfVal)} > 0 (concavidade para cima)`;
+            }
+          } else {
+            // Zona de Perigo: f'(p) = 0 e f''(p) = 0
+            const ddfL = ddfFn(p - hTest);
+            const ddfR = ddfFn(p + hTest);
+            const dfL = dfFn(p - hTest);
+            const dfR = dfFn(p + hTest);
+
+            if (Number.isFinite(ddfL) && Number.isFinite(ddfR) && ddfL * ddfR < 0) {
+              kind = 'inflection';
+              classification = 'Ponto de Inflexão';
+              const dir = ddfL < 0 ? 'para baixo → para cima' : 'para cima → para baixo';
+              justification = `$f'(p) = 0$, $f''(p) = 0$ e troca de concavidade (${dir})`;
+              hoverJustification = `f'(p) = 0, f''(p) = 0 e troca de concavidade (${dir})`;
+            } else if (Number.isFinite(dfL) && Number.isFinite(dfR) && dfL > 0 && dfR < 0) {
+              kind = 'max';
+              classification = 'Máximo Local';
+              justification = `$f'(p) = 0$ e $f''(p) = 0$ (Zona de Perigo), sem troca de concavidade; $f'$ muda de $+$ para $-$`;
+              hoverJustification = `f'(p) = 0 e f''(p) = 0; f'(x) muda de + para -`;
+            } else if (Number.isFinite(dfL) && Number.isFinite(dfR) && dfL < 0 && dfR > 0) {
+              kind = 'min';
+              classification = 'Mínimo Local';
+              justification = `$f'(p) = 0$ e $f''(p) = 0$ (Zona de Perigo), sem troca de concavidade; $f'$ muda de $-$ para $+$`;
+              hoverJustification = `f'(p) = 0 e f''(p) = 0; f'(x) muda de - para +`;
+            } else {
+              return;
+            }
+          }
+
+          // Verifica se é extremo global no intervalo analisado
+          const globalTol = Math.max(1e-3, (globalMaxY - globalMinY) * 1e-3);
+          if (kind === 'max' && Math.abs(y - globalMaxY) <= globalTol) {
+            classification = 'Máximo Global';
+            isGlobal = true;
+          } else if (kind === 'min' && Math.abs(y - globalMinY) <= globalTol) {
+            classification = 'Mínimo Global';
+            isGlobal = true;
+          }
+
+          detectedPoints.push({ x: p, y, kind, isGlobal, classification, justification, hoverJustification, isHorizontal: true });
+        });
+
+        // Raízes de f''(x) = 0 com efetiva troca de sinal (Pontos de Inflexão)
+        const mergeTol = Math.max(1e-2, (xMax - xMin) * 1e-3);
+        inflRoots.forEach(p => {
+          const already = detectedPoints.some(pt => Math.abs(pt.x - p) < mergeTol);
+          if (already) return;
+
+          const ddfL = ddfFn(p - hTest);
+          const ddfR = ddfFn(p + hTest);
+          if (Number.isFinite(ddfL) && Number.isFinite(ddfR) && ddfL * ddfR < 0) {
+            const y = fFn(p);
+            if (!Number.isFinite(y)) return;
+            const dir = ddfL < 0 ? 'para baixo → para cima' : 'para cima → para baixo';
+            detectedPoints.push({
+              x: p,
+              y,
+              kind: 'inflection',
+              isGlobal: false,
+              classification: 'Ponto de Inflexão',
+              justification: `$f''(p) = 0$ com mudança de sinal de $f''(x)$ (concavidade ${dir})`,
+              hoverJustification: `f''(p) = 0 com mudança de sinal de f''(x) (concavidade ${dir})`,
+              isHorizontal: false
+            });
+          }
+        });
+
+        detectedPoints.sort((a, b) => a.x - b.x);
+
+        pgFocusedIndex = null;
+        pgLastState = { xs, yF, yDf, yDdf, xMin, xMax, detectedPoints };
+
+        updatePlaygroundFocusUI();
+        renderPlaygroundChart();
+        renderPlaygroundTable(detectedPoints, xMin, xMax);
+      }
+
+      function updatePlaygroundFocusUI() {
+        const clearBtn = document.getElementById('pg-clear-focus-btn');
+        if (clearBtn) {
+          clearBtn.classList.toggle('hidden', pgFocusedIndex === null);
+        }
+      }
+
+      function renderPlaygroundChart() {
+        if (!pgLastState) return;
+        const { xs, yF, yDf, yDdf, xMin, xMax, detectedPoints } = pgLastState;
+
+        const showF = document.getElementById('pg-opt-f')?.checked ?? true;
+        const showDf = document.getElementById('pg-opt-df')?.checked ?? false;
+        const showDdf = document.getElementById('pg-opt-ddf')?.checked ?? false;
+        const showTangents = document.getElementById('pg-opt-tangents')?.checked ?? true;
+
+        const traces = [];
+        if (showF) {
+          traces.push({
+            x: xs,
+            y: yF,
+            type: 'scatter',
+            mode: 'lines',
+            name: 'f(x)',
+            line: { color: COLORS.primary, width: 3.2 },
+            hovertemplate: '<b>f(x)</b><br>x = %{x:.2f}<br>y = %{y:.2f}<extra></extra>',
+            hoverlabel: makeHoverLabel('#0F172A')
+          });
+        }
+        if (showDf) {
+          traces.push({
+            x: xs,
+            y: yDf,
+            type: 'scatter',
+            mode: 'lines',
+            name: "f'(x)",
+            line: { color: COLORS.sky, width: 2.2, dash: 'dash' },
+            hovertemplate: "<b>f'(x)</b><br>x = %{x:.2f}<br>y = %{y:.2f}<extra></extra>",
+            hoverlabel: makeHoverLabel('#0369A1')
+          });
+        }
+        if (showDdf) {
+          traces.push({
+            x: xs,
+            y: yDdf,
+            type: 'scatter',
+            mode: 'lines',
+            name: "f''(x)",
+            line: { color: COLORS.slateMid, width: 1.9, dash: 'dot' },
+            hovertemplate: "<b>f''(x)</b><br>x = %{x:.2f}<br>y = %{y:.2f}<extra></extra>",
+            hoverlabel: makeHoverLabel('#334155')
+          });
+        }
+
+        const shapes = [];
+        const annotations = [];
+        let xAxisRange = [xMin, xMax];
+
+        // Halo do ponto focado inserido abaixo dos marcadores para nunca obstruir o hover
+        if (pgFocusedIndex !== null && detectedPoints[pgFocusedIndex]) {
+          const fp = detectedPoints[pgFocusedIndex];
+          traces.push({
+            x: [fp.x],
+            y: [fp.y],
+            type: 'scatter',
+            mode: 'markers',
+            name: 'Ponto em Foco',
+            showlegend: false,
+            marker: {
+              size: 22,
+              color: 'rgba(56, 189, 248, 0.25)',
+              line: { color: COLORS.royal, width: 3 }
+            },
+            hoverinfo: 'skip'
+          });
+
+          shapes.push({
+            type: 'line',
+            x0: fp.x,
+            x1: fp.x,
+            y0: 0,
+            y1: fp.y,
+            line: { color: COLORS.royal, width: 1.5, dash: 'dash' }
+          });
+
+          annotations.push({
+            x: fp.x,
+            y: fp.y,
+            text: `<b>${fp.classification}</b><br>(${fmtNum(fp.x)}, ${fmtNum(fp.y)})`,
+            showarrow: true,
+            arrowhead: 2,
+            ax: 0,
+            ay: -42,
+            bgcolor: '#EFF6FF',
+            bordercolor: '#2563EB',
+            borderwidth: 1.5,
+            borderpad: 5,
+            font: { size: 11.5, color: '#1E3A8A' }
+          });
+
+          const halfWindow = Math.max(1.2, (xMax - xMin) * 0.35);
+          xAxisRange = [Math.max(xMin, fp.x - halfWindow), Math.min(xMax, fp.x + halfWindow)];
+        }
+
+        const maxPts = detectedPoints.filter(p => p.kind === 'max');
+        const minPts = detectedPoints.filter(p => p.kind === 'min');
+        const infPts = detectedPoints.filter(p => p.kind === 'inflection');
+
+        if (maxPts.length) {
+          traces.push({
+            x: maxPts.map(p => p.x),
+            y: maxPts.map(p => p.y),
+            type: 'scatter',
+            mode: 'markers',
+            name: 'Máximo',
+            marker: {
+              color: maxPts.map(p => p.isGlobal ? COLORS.primary : COLORS.royal),
+              size: 12,
+              symbol: 'triangle-up',
+              line: { color: '#FFFFFF', width: 1.8 }
+            },
+            hovertext: maxPts.map(p => `<b>${p.classification}</b><br>Coordenadas: (${fmtNum(p.x)}, ${fmtNum(p.y)})<br>${p.hoverJustification}`),
+            hoverinfo: 'text',
+            hoverlabel: makeHoverLabel('#1E3A8A')
+          });
+        }
+        if (minPts.length) {
+          traces.push({
+            x: minPts.map(p => p.x),
+            y: minPts.map(p => p.y),
+            type: 'scatter',
+            mode: 'markers',
+            name: 'Mínimo',
+            marker: {
+              color: minPts.map(p => p.isGlobal ? COLORS.indigoDeep : COLORS.sky),
+              size: 12,
+              symbol: 'triangle-down',
+              line: { color: '#FFFFFF', width: 1.8 }
+            },
+            hovertext: minPts.map(p => `<b>${p.classification}</b><br>Coordenadas: (${fmtNum(p.x)}, ${fmtNum(p.y)})<br>${p.hoverJustification}`),
+            hoverinfo: 'text',
+            hoverlabel: makeHoverLabel('#0369A1')
+          });
+        }
+        if (infPts.length) {
+          traces.push({
+            x: infPts.map(p => p.x),
+            y: infPts.map(p => p.y),
+            type: 'scatter',
+            mode: 'markers',
+            name: 'Ponto de Inflexão',
+            marker: { color: COLORS.slateDark, size: 12, symbol: 'diamond', line: { color: '#FFFFFF', width: 1.8 } },
+            hovertext: infPts.map(p => `<b>${p.classification}</b><br>Coordenadas: (${fmtNum(p.x)}, ${fmtNum(p.y)})<br>${p.hoverJustification}`),
+            hoverinfo: 'text',
+            hoverlabel: makeHoverLabel('#334155')
+          });
+        }
+
+        if (showTangents) {
+          const span = (xMax - xMin) * 0.085;
+          detectedPoints.filter(p => p.isHorizontal).forEach(pt => {
+            shapes.push({
+              type: 'line',
+              x0: pt.x - span,
+              x1: pt.x + span,
+              y0: pt.y,
+              y1: pt.y,
+              line: { color: COLORS.skyBright, width: 2.4 }
+            });
+          });
+        }
+
+        const layout = baseLayout({
+          shapes,
+          annotations,
+          xaxis: { range: xAxisRange, title: { text: 'x' }, zeroline: true, zerolinecolor: '#94A3B8', gridcolor: '#F1F5F9' },
+          yaxis: { title: { text: 'y' }, zeroline: true, zerolinecolor: '#94A3B8', gridcolor: '#F1F5F9', autorange: true }
+        });
+
+        Plotly.react('chart-playground', traces, layout, PLOTLY_CONFIG);
+      }
+
+      function renderPlaygroundTable(points, xMin, xMax) {
+        const tbody = document.getElementById('pg-table-body');
+        const countEl = document.getElementById('pg-points-count');
+        if (!tbody || !countEl) return;
+        tbody.innerHTML = '';
+
+        countEl.textContent = `${points.length} ponto(s) em [${fmtNum(xMin)}, ${fmtNum(xMax)}]`;
+
+        if (points.length === 0) {
+          tbody.innerHTML = `
+            <tr>
+              <td colspan="4" class="px-5 py-7 text-center text-sm text-slate-500">
+                Nenhum ponto crítico ou ponto de inflexão foi detectado dentro do intervalo [${fmtNum(xMin)}, ${fmtNum(xMax)}].
+              </td>
+            </tr>
+          `;
+          return;
+        }
+
+        points.forEach((pt, idx) => {
+          let badgeClass = 'bg-slate-100 text-slate-800 border-2 border-slate-500/70';
+          if (pt.kind === 'max') {
+            badgeClass = pt.isGlobal
+              ? 'bg-[#1E3A8A] text-white'
+              : 'bg-[#DBEAFE] text-[#1E3A8A] border border-blue-300';
+          } else if (pt.kind === 'min') {
+            badgeClass = pt.isGlobal
+              ? 'bg-[#312E81] text-white'
+              : 'bg-[#E0F2FE] text-[#0284C7] border border-sky-300';
+          }
+
+          const isFocused = pgFocusedIndex === idx;
+          const tr = document.createElement('tr');
+          tr.className = `pg-table-row ${isFocused ? 'is-focused' : ''}`;
+          tr.innerHTML = `
+            <td class="px-5 py-3.5 whitespace-nowrap font-bold text-[#1E3A8A]">
+              $p_{${idx + 1}}$
+            </td>
+            <td class="px-5 py-3.5 whitespace-nowrap font-mono font-semibold text-slate-900">
+              (${fmtNum(pt.x)}, ${fmtNum(pt.y)})
+            </td>
+            <td class="px-5 py-3.5 whitespace-nowrap">
+              <span class="inline-flex items-center px-2.5 py-1 rounded-lg text-xs font-bold ${badgeClass}">
+                ${pt.classification}
+              </span>
+            </td>
+            <td class="px-5 py-3.5 text-slate-700 text-xs sm:text-sm leading-relaxed">${pt.justification}</td>
+          `;
+
+          tr.addEventListener('click', () => {
+            pgFocusedIndex = pgFocusedIndex === idx ? null : idx;
+            updatePlaygroundFocusUI();
+            renderPlaygroundChart();
+            renderPlaygroundTable(points, xMin, xMax);
+          });
+
+          tbody.appendChild(tr);
+        });
+
+        renderMath(tbody);
+      }
+
+      function insertAtCursor(inputEl, snippet) {
+        const start = inputEl.selectionStart ?? inputEl.value.length;
+        const end = inputEl.selectionEnd ?? inputEl.value.length;
+        const before = inputEl.value.slice(0, start);
+        const after = inputEl.value.slice(end);
+
+        inputEl.value = before + snippet + after;
+        const cursorPos = snippet === '()' ? start + 1 : start + snippet.length;
+        inputEl.focus();
+        inputEl.setSelectionRange(cursorPos, cursorPos);
+        updateLivePreview();
+      }
+
+      function initPlaygroundSection() {
+        const inputEl = document.getElementById('pg-func-input');
+        const xMinEl = document.getElementById('pg-xmin');
+        const xMaxEl = document.getElementById('pg-xmax');
+        const analyzeBtn = document.getElementById('pg-analyze-btn');
+        const clearBtn = document.getElementById('pg-clear-btn');
+        const clearFocusBtn = document.getElementById('pg-clear-focus-btn');
+
+        if (analyzeBtn) {
+          analyzeBtn.addEventListener('click', analyzePlayground);
+        }
+
+        [inputEl, xMinEl, xMaxEl].forEach(el => {
+          if (!el) return;
+          el.addEventListener('keydown', evt => {
+            if (evt.key === 'Enter') {
+              evt.preventDefault();
+              analyzePlayground();
+            }
+          });
+        });
+
+        if (inputEl) {
+          inputEl.addEventListener('input', updateLivePreview);
+        }
+
+        if (clearBtn && inputEl) {
+          clearBtn.addEventListener('click', () => {
+            inputEl.value = '';
+            inputEl.focus();
+            updateLivePreview();
+            hidePgError();
+          });
+        }
+
+        if (clearFocusBtn) {
+          clearFocusBtn.addEventListener('click', () => {
+            pgFocusedIndex = null;
+            updatePlaygroundFocusUI();
+            renderPlaygroundChart();
+            if (pgLastState) {
+              renderPlaygroundTable(pgLastState.detectedPoints, pgLastState.xMin, pgLastState.xMax);
+            }
+          });
+        }
+
+        // Botões de atalhos de símbolos
+        document.querySelectorAll('.pg-shortcut').forEach(btn => {
+          btn.addEventListener('click', () => {
+            if (inputEl) insertAtCursor(inputEl, btn.dataset.insert || '');
+          });
+        });
+
+        // Botões de exemplos pré-carregados
+        document.querySelectorAll('.pg-preset').forEach(btn => {
+          btn.addEventListener('click', () => {
+            if (inputEl) inputEl.value = btn.dataset.preset || '';
+            if (xMinEl && btn.dataset.min) xMinEl.value = btn.dataset.min;
+            if (xMaxEl && btn.dataset.max) xMaxEl.value = btn.dataset.max;
+            updateLivePreview();
+            analyzePlayground();
+          });
+        });
+
+        // Checkboxes de sobreposição de curvas e retas tangentes
+        ['pg-opt-f', 'pg-opt-df', 'pg-opt-ddf', 'pg-opt-tangents'].forEach(id => {
+          const el = document.getElementById(id);
+          if (el) {
+            el.addEventListener('change', renderPlaygroundChart);
+          }
+        });
+
+        updateLivePreview();
+        analyzePlayground();
+      }
+
+      /* ---------------------------------------------------------------------
+       * 6. INICIALIZAÇÃO GERAL E EVENTOS GLOBAIS
+       * --------------------------------------------------------------------- */
+      function initApp() {
+        // Navegação entre abas (desktop e mobile)
+        document.querySelectorAll('[data-tab]').forEach(btn => {
+          btn.addEventListener('click', () => {
+            switchTab(btn.dataset.tab);
+          });
+        });
+
+        // Menu hambúrguer mobile
+        const mobileBtn = document.getElementById('mobile-menu-btn');
+        const mobileMenu = document.getElementById('mobile-menu');
+        const iconOpen = document.getElementById('mobile-menu-icon-open');
+        const iconClose = document.getElementById('mobile-menu-icon-close');
+
+        if (mobileBtn && mobileMenu) {
+          mobileBtn.addEventListener('click', () => {
+            const isHidden = mobileMenu.classList.toggle('hidden');
+            mobileBtn.setAttribute('aria-expanded', String(!isHidden));
+            if (iconOpen) iconOpen.classList.toggle('hidden', !isHidden);
+            if (iconClose) iconClose.classList.toggle('hidden', isHidden);
+          });
+        }
+
+        // Navegação por teclado (← e →) nos Exemplos Resolvidos
+        document.addEventListener('keydown', evt => {
+          if (activeTab !== 'exemplos') return;
+          const tag = document.activeElement?.tagName;
+          if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT') return;
+
+          if (evt.key === 'ArrowRight') {
+            const total = EXAMPLES[currentExIdx].steps.length;
+            if (!showAllStepsMode && currentStepIdx < total - 1) {
+              currentStepIdx++;
+              renderExampleView();
+            }
+          } else if (evt.key === 'ArrowLeft') {
+            if (!showAllStepsMode && currentStepIdx > 0) {
+              currentStepIdx--;
+              renderExampleView();
+            }
+          }
+        });
+
+        // Progresso de leitura e responsividade de gráficos
+        window.addEventListener('scroll', updateReadingProgress, { passive: true });
+        window.addEventListener('resize', () => {
+          resizeVisibleCharts();
+          updateReadingProgress();
+        });
+
+        // Renderiza aba inicial (Visão Geral)
+        initTheorySection();
+        theoryRendered = true;
+        renderMath(document.body);
+        updateReadingProgress();
+      }
+
+      window.addEventListener('load', initApp);
+    })();
+  </script>
+</body>
+</html>
